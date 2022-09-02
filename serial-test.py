@@ -6,17 +6,20 @@ import time
 #
 # - SECTION - references
 #
-#  *  https://www.tutorialspoint.com/increment-and-decrement-operators-in-python
+#  (1)  https://www.tutorialspoint.com/increment-and-decrement-operators-in-python
 #
-#  *  https://www.geeksforgeeks.org/print-without-newline-python/
+#  (2)  https://www.geeksforgeeks.org/print-without-newline-python/
 #
-#  *  https://www.askpython.com/python-modules/python-time-sleep-method 
+#  (3)  https://www.askpython.com/python-modules/python-time-sleep-method 
 #
-#  *  https://pyserial.readthedocs.io/en/latest/pyserial_api.html#serial.Serial.write
+#  (4)  https://pyserial.readthedocs.io/en/latest/pyserial_api.html#serial.Serial.write
 #
-#  *  https://gist.github.com/yptheangel/fcd62ad59a569ace75eb07025b8e9c4f . . . serialPort.write(bytes.fromhex("a5"))
+#  (5)  https://gist.github.com/yptheangel/fcd62ad59a569ace75eb07025b8e9c4f . . . serialPort.write(bytes.fromhex("a5"))
 #
-#  *  https://jimmywongiot.com/2021/03/13/byte-manipulation-on-python-platform/
+#  (6)  https://jimmywongiot.com/2021/03/13/byte-manipulation-on-python-platform/
+#
+#  Note STM32WL55 flash memory start mapped to 0x08000000, per document:
+#  (7)  rm0453-stm32wl5x-advanced-armbased-32bit-mcus-with-subghz-radio-solution-stmicroelectronics.pdf
 #
 # ----------------------------------------------------------------------
 #
@@ -27,7 +30,7 @@ import time
 #
 
 serialPort = serial.Serial(port = "/dev/ttyUSB0",
-                           baudrate=230400,
+                           baudrate=115200,
                            bytesize=serial.EIGHTBITS,
                            parity=serial.PARITY_EVEN,
                            stopbits=serial.STOPBITS_ONE,
@@ -60,6 +63,68 @@ CHOSEN_DELAY = ONE_NANOSECOND
 
 
 
+
+# ----------------------------------------------------------------------
+# - SECTION - routines
+# ----------------------------------------------------------------------
+
+# Example code from reference (6) jimmywongiot.com:
+
+# def serial_command(cmd):
+#     serial_cmd = cmd + '\r'
+#     return bytes(serial_cmd.encode())
+
+
+##
+## @brief:  this routine expects
+##
+##   *  an array of bytes
+##   *  an integer value
+##
+## @note We would consider taking commands as single quoted strings,
+##   however STMicro ROM based bootloader command set entails values
+##   outside the traditional ASCII range.
+##
+
+def send_bootloader_cmd(command_as_bytes, send_count):
+
+    command_get_attempts = 0
+    serialPort.write(bytes.fromhex("7f"))
+    time.sleep(0.00001)
+
+    print("sending", end=" ")
+    print(command_as_bytes, end=" ")
+    print("to bootloader . . .")
+
+    while ( command_get_attempts < send_count ):
+        command_get_attempts += 1
+        time.sleep(CHOSEN_DELAY)
+        serialPort.write(command_as_bytes)
+
+        while ( serialPort.in_waiting == 0 ):
+            time.sleep(CHOSEN_DELAY)
+
+        while ( serialPort.in_waiting > 0 ):
+            serialString = serialPort.read()
+            print(serialString)
+
+        print("")
+
+    time.sleep(0.00001)
+
+
+def command_with_xor(command):
+    cmd = [0, 0]
+    cmd[0] = command
+    cmd[1] = (command ^ 0xFF)
+    return bytes(cmd)
+
+
+
+# ----------------------------------------------------------------------
+# - SECTION - main line code
+# ----------------------------------------------------------------------
+
 ## STMicro ROM based bootloader expects an initial byte holding 0x7F
 ##  as a sign to commence firmware updating over a serial protocol:
 print("Script starting,")
@@ -78,33 +143,17 @@ while ( bootloader_handshake_attempts < HANDSHAKE_ATTEMPTS_TO_MAKE ):
 bootloader_handshake_attempts = 0
 
 
-#
-GET_COMMAND = 0x00
-command_to_bootloader = (GET_COMMAND << 8) + (GET_COMMAND ^ 0xFF)
-command_as_bytes = bytes([0x00, 0xFF])
-#command_as_bytes = bytes([0x01, 0xFE])
-print("constructed bootloader command ", end=" ")
-print(command_as_bytes)
 
-print("sending", end=" ")
-# print(((255).to_bytes(2, byteorder='big')), end=" ")
-print(command_as_bytes, end=" ")
-print("to bootloader . . .")
-while ( command_get_attempts < 1 ):
-    command_get_attempts += 1
-    time.sleep(CHOSEN_DELAY)
-#    serialPort.write((255).to_bytes(2, byteorder='big'))
-    serialPort.write(command_as_bytes)
-    while ( serialPort.in_waiting == 0 ):
-        time.sleep(CHOSEN_DELAY)
-#    serialString = serialPort.readline()
-#    print(serialString)
-    while ( serialPort.in_waiting > 0 ):
-        serialString = serialPort.read()
-        print(serialString)
-    print("")
+BOOTLOADER_COMMAND__GET         = 0x00
+BOOTLOADER_COMMAND__GET_VERSION = 0x01
+BOOTLOADER_COMMAND__GET_ID      = 0x02
+BOOTLOADER_COMMAND__READ        = 0x11
+BOOTLOADER_COMMAND__GO          = 0x21
 
-command_get_attempts = 0
+## def send_bootloader_cmd(command_as_bytes, send_count):
+send_bootloader_cmd(command_with_xor(BOOTLOADER_COMMAND__GET),         1)
+send_bootloader_cmd(command_with_xor(BOOTLOADER_COMMAND__GET_VERSION), 1)
+send_bootloader_cmd(command_with_xor(BOOTLOADER_COMMAND__GET_ID),      1)
 
 
 #print("At original loop designed to read serial port received bytes:")
