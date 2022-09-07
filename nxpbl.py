@@ -247,17 +247,20 @@ if (1):
 
 #    time.sleep(CHOSEN_DELAY)
     received_chars = 0
-    while ( received_chars < 9 ):
-
-        received_chars += 1
+#    while ( received_chars < 9 ):
+    if (1): # . . . avoid need to change below indent while exploring need for while construct at this indent - TMH
+#        received_chars += 1
 
         while ( serialPort.in_waiting == 0 ):
             time.sleep(CHOSEN_DELAY)
 
         while ( serialPort.in_waiting > 0 ):
             serialString = serialPort.read()
-            print(hex(serialString), end=" ")
+            print(hex(serialString[0]), end=" ")
             print(serialString)
+            if (0):
+                print("received character count at", end=" ")
+                print(received_chars)
 
         time.sleep(CHOSEN_DELAY)
 
