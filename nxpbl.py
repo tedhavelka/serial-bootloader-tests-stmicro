@@ -4,7 +4,7 @@ import time
 # from defines.bootloader_nxp_tags import function_as_placeholder
 #import bootloader_nxp_defines
 #from bootloader_nxp_tags import NXP_RESPONSE_TAG__*
-from bootloader_nxp_tags import *
+from defines.bootloader_nxp_tags import *
 
 
 
@@ -248,7 +248,7 @@ BOOTLOADER_COMMAND__GO          = 0x21
 ##  as a sign to commence firmware updating over a serial protocol:
 print("NXP bootloader client script starting,")
 print("bootloader generic response tag from included python file is", end=" ")
-print(NXP_RESPONSE_TAG__GENERIC)
+print(hex(NXP_RESPONSE_TAG__GENERIC))
 
 
 
