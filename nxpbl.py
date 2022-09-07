@@ -77,6 +77,7 @@ CHOSEN_DELAY = ONE_NANOSECOND
 #     return bytes(serial_cmd.encode())
 
 
+##----------------------------------------------------------------------
 ##
 ## @brief:  this routine expects
 ##
@@ -87,8 +88,9 @@ CHOSEN_DELAY = ONE_NANOSECOND
 ##   however STMicro ROM based bootloader command set entails values
 ##   outside the traditional ASCII range.
 ##
+##----------------------------------------------------------------------
 
-def send_bootloader_cmd(command_as_bytes, send_count):
+def send_command_bootloader_stmicro(command_as_bytes, send_count):
 
     command_get_attempts = 0
     serialPort.write(bytes.fromhex("7f"))
@@ -113,7 +115,23 @@ def send_bootloader_cmd(command_as_bytes, send_count):
         print("")
 
     time.sleep(0.00001)
-#    return serialString
+
+
+
+##----------------------------------------------------------------------
+## @brief Routine to send command byte string to NXP bootloader
+##----------------------------------------------------------------------
+
+def send_command_bootloader_nxp(command_as_bytes, send_count):
+
+    command_get_attempts = 0
+
+    while ( command_get_attempts < send_count ):
+        command_get_attempts += 1
+        time.sleep(CHOSEN_DELAY)
+        serialPort.write(command_as_bytes)
+
+
 
 
 def command_with_xor(command):
@@ -164,24 +182,7 @@ def memory_address_with_crc(address):
 # - SECTION - main line code
 # ----------------------------------------------------------------------
 
-## STMicro ROM based bootloader expects an initial byte holding 0x7F
-##  as a sign to commence firmware updating over a serial protocol:
-print("Script starting,")
-
-
-print("At loop to attempt bootloader handshake several times:")
-while ( bootloader_handshake_attempts < HANDSHAKE_ATTEMPTS_TO_MAKE ):
-    bootloader_handshake_attempts += 1
-    time.sleep(CHOSEN_DELAY)
-    serialPort.write(bytes.fromhex("7f"))
-    while ( serialPort.in_waiting == 0 ):
-        time.sleep(CHOSEN_DELAY)
-    serialString = serialPort.readline()
-    print(serialString)
-
 bootloader_handshake_attempts = 0
-
-
 
 BOOTLOADER_COMMAND__GET         = 0x00
 BOOTLOADER_COMMAND__GET_VERSION = 0x01
@@ -189,8 +190,13 @@ BOOTLOADER_COMMAND__GET_ID      = 0x02
 BOOTLOADER_COMMAND__READ        = 0x11
 BOOTLOADER_COMMAND__GO          = 0x21
 
-## def send_bootloader_cmd(command_as_bytes, send_count):
-send_bootloader_cmd(command_with_xor(BOOTLOADER_COMMAND__GET_VERSION), 1)
+
+
+## STMicro ROM based bootloader expects an initial byte holding 0x7F
+##  as a sign to commence firmware updating over a serial protocol:
+print("NXP bootloader client script starting,")
+
+
 
 if (0):
     send_bootloader_cmd(command_with_xor(BOOTLOADER_COMMAND__GET),         1)
@@ -201,6 +207,7 @@ if (0):
 #latest_byte = send_bootloader_cmd(command_with_xor(BOOTLOADER_COMMAND__GET_ID), 1)
 #print("latest byte received is ", end=" ")
 #print(latest_byte)
+
 if (0):
     send_bootloader_cmd(command_with_xor(BOOTLOADER_COMMAND__GET_ID), 1)
 
@@ -211,7 +218,7 @@ if (0):
 #print("latest byte received is ", end=" ")
 #print(latest_byte)
 
-if (1):
+if (0):
     print("sending read command . . .")
     send_bootloader_cmd(command_with_xor(BOOTLOADER_COMMAND__READ), 1)
 
@@ -222,18 +229,41 @@ if (1):
 
 
 
+# def send_command_bootloader_nxp(command_as_bytes, send_count):
+if (1):
+    cmd = [0x5a, 0xa6]
+    print("sending NXP \"ping\" command", end=" ")
+    print(cmd, end=" ")
+    print(". . .")
+    send_command_bootloader_nxp(cmd, 2)
 
-#print("At original loop designed to read serial port received bytes:")
-#while(1):
-#
-#    # Wait until there is data waiting in the serial buffer
-#    if(serialPort.in_waiting > 0):
-#
-#        # Read data out of the buffer until a carraige return / new line is found
-#        serialString = serialPort.readline()
-#
-#        # Print the contents of the serial data
-#        print(serialString)
+    print("waiting for response . . .")
+    while ( serialPort.in_waiting == 0 ):
+        time.sleep(CHOSEN_DELAY)
+
+    while ( serialPort.in_waiting > 0 ):
+        serialString = serialPort.read()
+        print(serialString)
+
+#    time.sleep(CHOSEN_DELAY)
+    received_chars = 0
+    while ( received_chars < 9 ):
+
+        received_chars += 1
+
+        while ( serialPort.in_waiting == 0 ):
+            time.sleep(CHOSEN_DELAY)
+
+        while ( serialPort.in_waiting > 0 ):
+            serialString = serialPort.read()
+            print(hex(serialString), end=" ")
+            print(serialString)
+
+        time.sleep(CHOSEN_DELAY)
 
 
-print("script done.")
+
+    print("")
+
+
+print("NXP bootloader client script done.")
