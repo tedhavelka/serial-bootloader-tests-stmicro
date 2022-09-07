@@ -1,6 +1,13 @@
 import serial
 import time
 
+# from defines.bootloader_nxp_tags import function_as_placeholder
+#import bootloader_nxp_defines
+#from bootloader_nxp_tags import NXP_RESPONSE_TAG__*
+from bootloader_nxp_tags import *
+
+
+
 #
 # ----------------------------------------------------------------------
 #
@@ -21,6 +28,17 @@ import time
 #  Note STM32WL55 flash memory start mapped to 0x08000000, per document:
 #  (7)  rm0453-stm32wl5x-advanced-armbased-32bit-mcus-with-subghz-radio-solution-stmicroelectronics.pdf
 #
+#
+# 2022-09-07
+#
+#  (8)  https://learn.adafruit.com/micropython-basics-loading-modules/import-code
+#
+#
+#
+# Tangential topics:
+#
+#  (tan-1)  https://www.techonthenet.com/ascii/chart.php
+#
 # ----------------------------------------------------------------------
 #
 
@@ -32,7 +50,7 @@ import time
 serialPort = serial.Serial(port = "/dev/ttyUSB0",
                            baudrate=115200,
                            bytesize=serial.EIGHTBITS,
-                           parity=serial.PARITY_EVEN,
+                           parity=serial.PARITY_NONE,   # PARITY_EVEN,
                            stopbits=serial.STOPBITS_ONE,
                            timeout=0,
                            write_timeout=2.0)
@@ -62,6 +80,40 @@ ONE_HUNDRED_MICROSECONDS = 0.0001
 #CHOSEN_DELAY = ONE_HUNDRED_MICROSECONDS
 #CHOSEN_DELAY = TEN_MICROSECONDS
 CHOSEN_DELAY = ONE_NANOSECOND
+
+NXP_BOOTLOADER_START_BYTE = 0x5a
+
+
+
+# ----------------------------------------------------------------------
+# - SECTION - python data structures
+#
+# Reference https://www.geeksforgeeks.org/user-defined-data-structures-in-python/
+# ----------------------------------------------------------------------
+
+class framing_packet:
+    def __init__(self, packet_type):
+        self.start_byte = NXP_BOOTLOADER_START_BYTE
+        self.packet_type = packet_type
+        self.length_low = 0x00
+        self.length_high = 0x00
+        self.crc16_low = 0x00
+        self.crc16_high = 0x00
+        self.packet = None
+
+
+class command_packet_header:
+    def __init__(self, command_tag):
+        self.command_or_response_tag = command_tag
+        self.flags = None
+        self.reserved = 0x00
+        self.parameter_count = 0
+
+
+class command_packet:
+    def __init__(self, packet_header):
+        self.header = packet_header
+
 
 
 
@@ -195,6 +247,8 @@ BOOTLOADER_COMMAND__GO          = 0x21
 ## STMicro ROM based bootloader expects an initial byte holding 0x7F
 ##  as a sign to commence firmware updating over a serial protocol:
 print("NXP bootloader client script starting,")
+print("bootloader generic response tag from included python file is", end=" ")
+print(NXP_RESPONSE_TAG__GENERIC)
 
 
 
