@@ -305,7 +305,10 @@ if (1):
         serialString = serialPort.read()
         if ( serialString[0] == 0x5a ):
             print()
-        print(hex(serialString[0]), end=" ")
+#        print(hex(serialString[0]), end=" ")
+# Reference https://stackoverflow.com/questions/61206672/how-to-add-leading-0-to-hexadecimal
+        val = serialString[0]
+        print("0x%02x" % val, end=" ")
         print(serialString)
 
     print("- INFO - response to ping command appears done.")
