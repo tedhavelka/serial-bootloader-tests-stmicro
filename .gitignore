@@ -5,3 +5,4 @@ pyvenv.cfg
 share/
 stash/
 defines/__pycache__/
+__pycache__/

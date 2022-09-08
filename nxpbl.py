@@ -1,10 +1,14 @@
 import serial
 import time
 
-# from defines.bootloader_nxp_tags import function_as_placeholder
-#import bootloader_nxp_defines
-#from bootloader_nxp_tags import NXP_RESPONSE_TAG__*
+
+# 2022-09-07
+#
+#  (8)  https://learn.adafruit.com/micropython-basics-loading-modules/import-code
+
 from defines.bootloader_nxp_tags import *
+
+import crc16
 
 
 
@@ -242,6 +246,9 @@ def memory_address_with_crc(address):
 
 bootloader_handshake_attempts = 0
 
+xmodem_crc16 = 0
+
+# STMicro command definitions:
 BOOTLOADER_COMMAND__GET         = 0x00
 BOOTLOADER_COMMAND__GET_VERSION = 0x01
 BOOTLOADER_COMMAND__GET_ID      = 0x02
@@ -256,6 +263,12 @@ print("NXP bootloader client script starting,")
 print("bootloader generic response tag from included python file is", end=" ")
 print(hex(NXP_RESPONSE_TAG__GENERIC))
 
+print("calling crc16 routine as test . . .")
+crc_test_sequence = [0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39]
+xmodem_crc16 = crc16.calc_crc16_with_carry_in(crc_test_sequence, 0)
+
+print("crc16 xmodem variant routine test gives", end=" ")
+print(hex(xmodem_crc16))
 
 
 if (0):
