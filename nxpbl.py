@@ -6,9 +6,15 @@ import time
 #
 #  (8)  https://learn.adafruit.com/micropython-basics-loading-modules/import-code
 
-from defines.bootloader_nxp_tags import *
+## Note:  from bootloader_nxp_tags.py we are importing variables used as constants.
+#from defines.bootloader_nxp_tags import *
+#import bootloader_nxp_tags . . . namespace with bootloader tags as constants not getting shared
+from bootloader_nxp_tags import *
 
 import crc16
+
+## Note:  from mcuboot_packets.py we are importing python classes to serve like C structures.
+from mcuboot_packets import *
 
 
 
@@ -91,8 +97,6 @@ ONE_HUNDRED_MICROSECONDS = 0.0001
 #CHOSEN_DELAY = TEN_MICROSECONDS
 CHOSEN_DELAY = ONE_NANOSECOND
 
-NXP_BOOTLOADER_START_BYTE = 0x5a
-
 
 
 # ----------------------------------------------------------------------
@@ -101,28 +105,28 @@ NXP_BOOTLOADER_START_BYTE = 0x5a
 # Reference https://www.geeksforgeeks.org/user-defined-data-structures-in-python/
 # ----------------------------------------------------------------------
 
-class framing_packet:
-    def __init__(self, packet_type):
-        self.start_byte = NXP_BOOTLOADER_START_BYTE
-        self.packet_type = packet_type
-        self.length_low = 0x00
-        self.length_high = 0x00
-        self.crc16_low = 0x00
-        self.crc16_high = 0x00
-        self.packet = None
+#class framing_packet:
+#    def __init__(self, packet_type):
+#        self.start_byte = MCUBOOT_BOOTLOADER_START_BYTE
+#        self.packet_type = packet_type
+#        self.length_low = 0x00
+#        self.length_high = 0x00
+#        self.crc16_low = 0x00
+#        self.crc16_high = 0x00
+#        self.packet = None
+#
+
+#class command_packet_header:
+#    def __init__(self, command_tag):
+#        self.command_or_response_tag = command_tag
+#        self.flags = None
+#        self.reserved = 0x00
+#        self.parameter_count = 0
 
 
-class command_packet_header:
-    def __init__(self, command_tag):
-        self.command_or_response_tag = command_tag
-        self.flags = None
-        self.reserved = 0x00
-        self.parameter_count = 0
-
-
-class command_packet:
-    def __init__(self, packet_header):
-        self.header = packet_header
+#class command_packet:
+#    def __init__(self, packet_header):
+#        self.header = packet_header
 
 
 
@@ -195,7 +199,15 @@ def send_command_bootloader_nxp(command_as_bytes, send_count):
 
 
 
+# STMicro command definitions:
+BOOTLOADER_COMMAND__GET         = 0x00
+BOOTLOADER_COMMAND__GET_VERSION = 0x01
+BOOTLOADER_COMMAND__GET_ID      = 0x02
+BOOTLOADER_COMMAND__READ        = 0x11
+BOOTLOADER_COMMAND__GO          = 0x21
 
+
+# STMicro bootloader related routine:
 def command_with_xor(command):
     cmd = [0, 0]
     cmd[0] = command
@@ -203,6 +215,7 @@ def command_with_xor(command):
     return bytes(cmd)
 
 
+# STMicro bootloader related routine:
 def send_address_of_memory(address):
     command_get_attempts = 0
     serialPort.write(bytes.fromhex("7f"))
@@ -212,8 +225,6 @@ def send_address_of_memory(address):
     print(address, end=" ")
     print(". . .")
 
-#    while ( command_get_attempts < send_count ):
-#        command_get_attempts += 1
     time.sleep(CHOSEN_DELAY)
     serialPort.write(address)
 
@@ -229,6 +240,7 @@ def send_address_of_memory(address):
     time.sleep(0.00001)
 
 
+# STMicro bootloader related routine:
 def memory_address_with_crc(address):
     bytes_for_address = [0, 0, 0, 0, 0]
     bytes_for_address[0] = (( address >> 24 ) & 0xff )
@@ -248,21 +260,16 @@ bootloader_handshake_attempts = 0
 
 xmodem_crc16 = 0
 
-# STMicro command definitions:
-BOOTLOADER_COMMAND__GET         = 0x00
-BOOTLOADER_COMMAND__GET_VERSION = 0x01
-BOOTLOADER_COMMAND__GET_ID      = 0x02
-BOOTLOADER_COMMAND__READ        = 0x11
-BOOTLOADER_COMMAND__GO          = 0x21
 
-
-
-## STMicro ROM based bootloader expects an initial byte holding 0x7F
-##  as a sign to commence firmware updating over a serial protocol:
 print("NXP bootloader client script starting,")
-print("bootloader generic response tag from included python file is", end=" ")
-print(hex(NXP_RESPONSE_TAG__GENERIC))
 
+# DEV TEST:
+print("bootloader generic response tag from included python file is", end=" ")
+print(hex(MCUBOOT_RESPONSE_TAG__GENERIC))
+
+
+# DEV TEST:
+# See NXP document MCUBOOTRM.pdf for xmodem CRC16 variant, this test string and expected 0x31c3 result:
 print("calling crc16 routine as test . . .")
 crc_test_sequence = [0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39]
 xmodem_crc16 = crc16.calc_crc16_with_carry_in(crc_test_sequence, 0)
@@ -270,6 +277,18 @@ xmodem_crc16 = crc16.calc_crc16_with_carry_in(crc_test_sequence, 0)
 print("crc16 xmodem variant routine test gives", end=" ")
 print(hex(xmodem_crc16))
 
+
+# DEV TEST:
+first_packet = framing_packet(MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
+print("instantiated a first framinig packet, showing its content . . .")
+display_framing_packet(first_packet)
+
+
+
+
+## ---------------------------------------------------------------------
+## Note:  STMicro ROM based bootloader expects an initial byte holding
+##  0x7F as a sign to commence firmware updating over a serial protocol.
 
 if (0):
     send_bootloader_cmd(command_with_xor(BOOTLOADER_COMMAND__GET),         1)

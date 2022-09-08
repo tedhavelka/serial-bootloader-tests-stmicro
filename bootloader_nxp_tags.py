@@ -1,0 +1,36 @@
+## @brief This file part of NXP bootloader testing script named nxpbl.py
+##
+## Reference https://docs.python.org/3/tutorial/modules.html
+
+
+
+MCUBOOT_BOOTLOADER_START_BYTE = 0x5A
+
+
+MCUBOOT_FRAMING_PACKET_TYPE__ACK           = 0xA1
+MCUBOOT_FRAMING_PACKET_TYPE__NAK           = 0xA2
+MCUBOOT_FRAMING_PACKET_TYPE__ACK_ABORT     = 0xA3
+MCUBOOT_FRAMING_PACKET_TYPE__COMMAND       = 0xA4
+MCUBOOT_FRAMING_PACKET_TYPE__DATA          = 0xA5
+MCUBOOT_FRAMING_PACKET_TYPE__PING          = 0xA6
+MCUBOOT_FRAMING_PACKET_TYPE__PING_RESPONSE = 0xA7
+
+
+
+#NXP_COMMAND_TAG__
+MCUBOOT_COMMAND_TAG__FLASH_ERASE_ALL       = 0x00
+MCUBOOT_COMMAND_TAG__FLASH_ERASE_REGION    = 0x01
+
+
+#NXP_RESPONSE_TAG__
+MCUBOOT_RESPONSE_TAG__GENERIC              = 0xA0
+MCUBOOT_RESPONSE_TAG__GET_PROPERTY         = 0xA0
+MCUBOOT_RESPONSE_TAG__READ_MEMORY          = 0xA3
+MCUBOOT_RESPONSE_TAG__FLASH_READ_ONCE      = 0xAF
+MCUBOOT_RESPONSE_TAG__FLASH_READ_RESOURCE  = 0xB0
+
+
+
+def function_as_placeholder():
+    print("trivial function for included python file holding NXP bootloader constants.")
+
