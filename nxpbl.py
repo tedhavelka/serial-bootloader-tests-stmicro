@@ -47,12 +47,14 @@ from defines.bootloader_nxp_tags import *
 #                               38400 - no response at 1uS
 #
 
+SERIAL_PORT_READ_TIMEOUT = 1.0 # seconds
+
 serialPort = serial.Serial(port = "/dev/ttyUSB0",
                            baudrate=115200,
                            bytesize=serial.EIGHTBITS,
                            parity=serial.PARITY_NONE,   # PARITY_EVEN,
                            stopbits=serial.STOPBITS_ONE,
-                           timeout=0,
+                           timeout=SERIAL_PORT_READ_TIMEOUT,
                            write_timeout=2.0)
 
         
@@ -71,6 +73,10 @@ command_get_attempts = 0
 COMMAND_GET_ATTEMPTS_TO_MAKE = 2
 
 
+
+# ----------------------------------------------------------------------
+# - SECTION - constants ( in primary bootloader client script )
+# ----------------------------------------------------------------------
 
 ONE_NANOSECOND           = 0.000000001
 ONE_MICROSECOND          = 0.000001
@@ -297,28 +303,17 @@ if (1):
 
     while ( serialPort.in_waiting > 0 ):
         serialString = serialPort.read()
+        if ( serialString[0] == 0x5a ):
+            print()
+        print(hex(serialString[0]), end=" ")
         print(serialString)
 
-#    time.sleep(CHOSEN_DELAY)
-    received_chars = 0
-#    while ( received_chars < 9 ):
-    if (1): # . . . avoid need to change below indent while exploring need for while construct at this indent - TMH
-#        received_chars += 1
-
-        while ( serialPort.in_waiting == 0 ):
-            time.sleep(CHOSEN_DELAY)
-
-        while ( serialPort.in_waiting > 0 ):
-            serialString = serialPort.read()
-            print(hex(serialString[0]), end=" ")
-            print(serialString)
-            if (0):
-                print("received character count at", end=" ")
-                print(received_chars)
-
-        time.sleep(CHOSEN_DELAY)
-
-
+    print("- INFO - response to ping command appears done.")
+    print("- STEP - reading serial port once more as a timeout test,")
+    print("       ( timeout set to", end=" ")
+    print(SERIAL_PORT_READ_TIMEOUT, end=" ")
+    print(")")
+    serialString = serialPort.read()
 
     print("")
 
