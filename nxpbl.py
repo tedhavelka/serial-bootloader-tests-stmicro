@@ -99,37 +99,7 @@ CHOSEN_DELAY = ONE_NANOSECOND
 
 
 
-# ----------------------------------------------------------------------
-# - SECTION - python data structures
-#
 # Reference https://www.geeksforgeeks.org/user-defined-data-structures-in-python/
-# ----------------------------------------------------------------------
-
-#class framing_packet:
-#    def __init__(self, packet_type):
-#        self.start_byte = MCUBOOT_BOOTLOADER_START_BYTE
-#        self.packet_type = packet_type
-#        self.length_low = 0x00
-#        self.length_high = 0x00
-#        self.crc16_low = 0x00
-#        self.crc16_high = 0x00
-#        self.packet = None
-#
-
-#class command_packet_header:
-#    def __init__(self, command_tag):
-#        self.command_or_response_tag = command_tag
-#        self.flags = None
-#        self.reserved = 0x00
-#        self.parameter_count = 0
-
-
-#class command_packet:
-#    def __init__(self, packet_header):
-#        self.header = packet_header
-
-
-
 
 
 # ----------------------------------------------------------------------

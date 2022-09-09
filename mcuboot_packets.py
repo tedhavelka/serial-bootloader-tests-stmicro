@@ -1,15 +1,17 @@
-##
-## ---------------------------------------------------------------------
-## @brief Part of nxpbl.py project, simple python work to
-##        exercise and learn about NXP's MCU bootloader built
-##        into many NXP 32-bit microcontrollers
-##
-## @references
-##
-##        *  MCUBOOTRM.pdf
-##
-## ---------------------------------------------------------------------
-##
+#
+# ----------------------------------------------------------------------
+#  @brief  Part of nxpbl.py project, simple python work to
+#          exercise and learn about NXP's MCU bootloader built
+#          into many NXP 32-bit microcontrollers
+#
+# @references
+#
+#   *  MCUBOOTRM.pdf
+#
+#   *  https://www.geeksforgeeks.org/user-defined-data-structures-in-python/
+#
+# ----------------------------------------------------------------------
+#
 
 
 from bootloader_nxp_tags import *
