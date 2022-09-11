@@ -17,6 +17,15 @@ import crc16
 from mcuboot_packets import *
 
 
+# 2022-09-10 SAT
+# working on MCUBoot read memory command,
+# MCUBOOTRM.pdf references:
+#
+#   page 28 . . . protocol of command with "outgoing" data phase, e.g. data from bootloader to host program
+#   page 35 . . . 4.6 command packet structure
+#   page 48 . . . read memory command, has parameters 'start address' and 'byte count'
+
+
 
 #
 # ----------------------------------------------------------------------
@@ -248,10 +257,22 @@ print("crc16 xmodem variant routine test gives", end=" ")
 print(hex(xmodem_crc16))
 
 
-# DEV TEST:
+# DEV TEST 4:
 first_packet = framing_packet(MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
 print("instantiated a first framinig packet, showing its content . . .")
 display_framing_packet(first_packet)
+
+print("buidling command header and packet . . .")
+command_header = command_packet_header(MCUBOOT_COMMAND_TAG__READ_MEMORY)
+command_header.parameter_count = 2
+
+read_memory_parameters = [0x20000400, 0x00000064]
+
+command = command_packet(command_header)
+command.parameters = read_memory_parameters 
+
+print("showing command packet:")
+display_command_packet(command)
 
 
 

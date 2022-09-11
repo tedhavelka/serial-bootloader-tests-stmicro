@@ -65,6 +65,22 @@ def display_framing_packet(packet):
     print("crc16 high:  0x%02x" % packet.crc16_high)
 
 
+def display_command_packet(packet):
+    print("preset command packet holds")
+    print("command or response tag:  0x%02x" % packet.header.command_or_response_tag)
+    print("                  flags:  0x%02x" % packet.header.flags)
+    print("               reserved:  0x%02x" % packet.header.reserved)
+    print("        parameter count:  0x%02x" % packet.header.parameter_count)
+
+    if (packet.parameters != None):
+        print("- WIP 0911 - command packet has parameters . . .")
+        print("present command carries", end=" ")
+        print("%u " % (len(packet.parameters)), end=" ")
+        print("parameters.")
+
+        for i in range(len(packet.parameters)):
+            print("0x%08X" % packet.parameters[i])
+
 
 
 
