@@ -83,10 +83,10 @@ def bytes_of_command_packet(command_hdr, command_pkt):
         print("parameters with present command.")
 
         for i in range(len(command_pkt.parameters)):
-            bytes.append((command_pkt.parameters[i] & 0xff000000) >> 24)
-            bytes.append((command_pkt.parameters[i] & 0x00ff0000) >> 16)
-            bytes.append((command_pkt.parameters[i] & 0x0000ff00) >> 8)
             bytes.append((command_pkt.parameters[i] & 0x000000ff))
+            bytes.append((command_pkt.parameters[i] & 0x0000ff00) >> 8)
+            bytes.append((command_pkt.parameters[i] & 0x00ff0000) >> 16)
+            bytes.append((command_pkt.parameters[i] & 0xff000000) >> 24)
     else:
         print("INFO - encountered command packet with no parameters.")
 
@@ -96,10 +96,12 @@ def bytes_of_command_packet(command_hdr, command_pkt):
 
 def calc_len_and_crc_of(framing_pkt, command_hdr, command_pkt):
 
+    command_length = COMMAND_HEADER_BYTE_COUNT + (SIZE_INT32 * len(command_pkt.parameters))
+    framing_pkt.length_low = command_length & 0x00FF
+    framing_pkt.length_high = command_length & 0xFF00
+
     framing_bytes = bytes_of_framing_packet(framing_pkt)
     command_bytes = bytes_of_command_packet(command_hdr, command_pkt)
-
-    command_length = COMMAND_HEADER_BYTE_COUNT + (SIZE_INT32 * len(command_pkt.parameters))
 
     crc_framing = calc_crc16_with_carry_in(framing_bytes, 0)
 
