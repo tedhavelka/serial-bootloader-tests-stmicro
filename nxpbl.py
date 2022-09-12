@@ -242,12 +242,18 @@ xmodem_crc16 = 0
 
 print("NXP bootloader client script starting,")
 
-# DEV TEST:
+# ----------------------------------------------------------------------
+# DEV TEST 1:
+# ----------------------------------------------------------------------
+
 print("bootloader generic response tag from included python file is", end=" ")
 print(hex(MCUBOOT_RESPONSE_TAG__GENERIC))
 
 
-# DEV TEST:
+# ----------------------------------------------------------------------
+# DEV TEST 2:
+# ----------------------------------------------------------------------
+
 # See NXP document MCUBOOTRM.pdf for xmodem CRC16 variant, this test string and expected 0x31c3 result:
 print("calling crc16 routine as test . . .")
 crc_test_sequence = [0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39]
@@ -257,7 +263,10 @@ print("crc16 xmodem variant routine test gives", end=" ")
 print(hex(xmodem_crc16))
 
 
+# ----------------------------------------------------------------------
 # DEV TEST 4:
+# ----------------------------------------------------------------------
+
 first_packet = framing_packet(MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
 print("instantiated a first framinig packet, showing its content . . .")
 display_framing_packet(first_packet)
@@ -274,6 +283,10 @@ command.parameters = read_memory_parameters
 print("showing command packet:")
 display_command_packet(command)
 
+# Following routine knows how to take mcuboot framing packet, command packet, and build complete crc'd message:
+crc16.calc_len_and_crc_of(first_packet, command_header, command)
+
+print("INFO: dev tests done.")
 
 
 

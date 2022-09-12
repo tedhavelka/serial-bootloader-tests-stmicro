@@ -1,4 +1,16 @@
+#
+# ----------------------------------------------------------------------
+#  @brief  Part of nxpbl.py project, simple python work to
+#          exercise and learn about NXP's MCU bootloader built
+#          into many NXP 32-bit microcontrollers
+# ----------------------------------------------------------------------
+#
+
 import numpy as np
+
+from mcuboot_packets import *
+
+
 
 ## ---------------------------------------------------------------------
 ##  @brief Following routine calculates sixteen bit CRC per xmodem
@@ -14,7 +26,6 @@ import numpy as np
 ##  @ref   https://docs.python.org/3/tutorial/controlflow.html
 ## ---------------------------------------------------------------------
 
-#def calc_crc16_with_carry_in(byte_array_to_check, byte_count, crc_from_caller):
 def calc_crc16_with_carry_in(byte_array_to_check, crc_from_caller):
 
     crc = int(crc_from_caller)
@@ -43,3 +54,64 @@ def calc_crc16_with_carry_in(byte_array_to_check, crc_from_caller):
     print("returning 0x%04x" % crc)
     return crc
 
+
+
+def bytes_of_framing_packet(framing_packet):
+    bytes = [0, 0, 0, 0]
+    bytes[0] = framing_packet.start_byte
+    bytes[1] = framing_packet.packet_type
+    bytes[2] = framing_packet.length_low
+    bytes[3] = framing_packet.length_high
+
+# Note we skip returning the crc bytes per MCUBOOTRM.pdf, section 4.4 page 33
+#    bytes[3] = framing_packet.crc16_low
+#    bytes[3] = framing_packet.crc16_high
+    return bytes
+
+
+
+def bytes_of_command_packet(command_hdr, command_pkt):
+
+    bytes = [0, 0, 0, 0]
+    bytes[0] = command_hdr.command_or_response_tag
+    bytes[1] = command_hdr.flags
+    bytes[2] = command_hdr.reserved
+    bytes[3] = command_hdr.parameter_count
+
+    if (len(command_pkt.parameters) > 0):
+        print("routine 'bytes_of_command_packet' finds %u" % len(command_pkt.parameters), end=" ")
+        print("parameters with present command.")
+
+        for i in range(len(command_pkt.parameters)):
+            bytes.append((command_pkt.parameters[i] & 0xff000000) >> 24)
+            bytes.append((command_pkt.parameters[i] & 0x00ff0000) >> 16)
+            bytes.append((command_pkt.parameters[i] & 0x0000ff00) >> 8)
+            bytes.append((command_pkt.parameters[i] & 0x000000ff))
+    else:
+        print("INFO - encountered command packet with no parameters.")
+
+    return bytes
+
+
+
+def calc_len_and_crc_of(framing_pkt, command_hdr, command_pkt):
+
+    framing_bytes = bytes_of_framing_packet(framing_pkt)
+    command_bytes = bytes_of_command_packet(command_hdr, command_pkt)
+
+    command_length = COMMAND_HEADER_BYTE_COUNT + (SIZE_INT32 * len(command_pkt.parameters))
+
+    crc_framing = calc_crc16_with_carry_in(framing_bytes, 0)
+
+    crc_command = calc_crc16_with_carry_in(command_bytes, crc_framing)
+
+    print("present command has length %u" % command_length, end=" ")
+    print("bytes,")
+    print("present framing and command packets give crc of 0x%04x" % crc_command, end=" ")
+    print("bytes.")
+
+## WIP - building up to assign command length and packet CRC to framing packet
+
+
+
+# --- EOF ---

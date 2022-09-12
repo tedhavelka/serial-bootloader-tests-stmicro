@@ -18,6 +18,11 @@ from bootloader_nxp_tags import *
 
 
 
+COMMAND_HEADER_BYTE_COUNT = 4
+SIZE_INT32 = 4
+
+
+
 ## Define MCUBoot framing packet, command packet, command header,
 ##  ( later possibly define "response packet", but may not be needed - TMH )
 
