@@ -14,14 +14,22 @@
 #
 
 
-from bootloader_nxp_tags import *
+from mcuboot_tags import *
 
 
+
+## ---------------------------------------------------------------------
+## - SECTION - effective constants
+## ---------------------------------------------------------------------
 
 COMMAND_HEADER_BYTE_COUNT = 4
 SIZE_INT32 = 4
 
 
+
+## ---------------------------------------------------------------------
+## - SECTION - classes (somewhat like C data structure)
+## ---------------------------------------------------------------------
 
 ## Define MCUBoot framing packet, command packet, command header,
 ##  ( later possibly define "response packet", but may not be needed - TMH )
@@ -57,11 +65,11 @@ class command_packet:
 
 
 ## ---------------------------------------------------------------------
-## - SECTION - routines
+## - SECTION - routines for development
 ## ---------------------------------------------------------------------
 
 def display_framing_packet(packet):
-    print("present framing packet holds")
+    print("DEV - present framing packet holds:")
     print("start byte:  0x%02x" % packet.start_byte)
     print("packet type: 0x%02x" % packet.packet_type)
     print("length low:  0x%02x" % packet.length_low)
@@ -71,7 +79,7 @@ def display_framing_packet(packet):
 
 
 def display_command_packet(packet):
-    print("preset command packet holds")
+    print("DEV - preset command packet holds:")
     print("command or response tag:  0x%02x" % packet.header.command_or_response_tag)
     print("                  flags:  0x%02x" % packet.header.flags)
     print("               reserved:  0x%02x" % packet.header.reserved)
@@ -86,6 +94,14 @@ def display_command_packet(packet):
         for i in range(len(packet.parameters)):
             print("0x%08X" % packet.parameters[i])
 
+
+
+def display_packet_as_bytes(packet):
+    j = 0
+    print("DEV - packet as bytes:")
+    for j in range(len(packet)):
+        print("0x%02X" % packet[j], end=" ")
+    print("")
 
 
 

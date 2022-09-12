@@ -6,8 +6,6 @@
 # ----------------------------------------------------------------------
 #
 
-import numpy as np
-
 from mcuboot_packets import *
 
 OPTION_OMIT_FRAMING_PACKET_CRC_BYTES = 0
@@ -115,8 +113,8 @@ def calc_len_and_crc_of(framing_pkt, command_hdr, command_pkt):
 
     crc_command = calc_crc16_with_carry_in(command_bytes, crc_framing)
 
-    framing_pkt.crc16_low = crc_command & 0x00FF
-    framing_pkt.crc16_high = crc_command & 0xFF00
+    framing_pkt.crc16_low  =  crc_command & 0x00FF
+    framing_pkt.crc16_high = (crc_command & 0xFF00) >> 8
 
     print("present command has length %u" % command_length, end=" ")
     print("bytes,")
@@ -130,6 +128,8 @@ def calc_len_and_crc_of(framing_pkt, command_hdr, command_pkt):
     bytes = bytes_of_framing_packet(framing_pkt, OPTION_INCLUDE_FRAMING_PACKET_CRC_BYTES)
     bytes.extend(command_bytes)
     return bytes
+
+
 
 
 

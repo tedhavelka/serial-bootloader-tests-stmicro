@@ -6,10 +6,7 @@ import time
 #
 #  (8)  https://learn.adafruit.com/micropython-basics-loading-modules/import-code
 
-## Note:  from bootloader_nxp_tags.py we are importing variables used as constants.
-#from defines.bootloader_nxp_tags import *
-#import bootloader_nxp_tags . . . namespace with bootloader tags as constants not getting shared
-from bootloader_nxp_tags import *
+from mcuboot_tags import *
 
 import crc16
 
@@ -288,6 +285,9 @@ command_as_bytes = crc16.calc_len_and_crc_of(first_packet, command_header, comma
 
 print("DEV TEST 4 - read memory command with framing entails %u" % len(command_as_bytes), end=" ")
 print("bytes.")
+
+display_packet_as_bytes(command_as_bytes)
+
 print("INFO: dev tests done.")
 
 
