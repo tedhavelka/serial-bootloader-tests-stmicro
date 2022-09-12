@@ -284,8 +284,10 @@ print("showing command packet:")
 display_command_packet(command)
 
 # Following routine knows how to take mcuboot framing packet, command packet, and build complete crc'd message:
-crc16.calc_len_and_crc_of(first_packet, command_header, command)
+command_as_bytes = crc16.calc_len_and_crc_of(first_packet, command_header, command)
 
+print("DEV TEST 4 - read memory command with framing entails %u" % len(command_as_bytes), end=" ")
+print("bytes.")
 print("INFO: dev tests done.")
 
 

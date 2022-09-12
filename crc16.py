@@ -10,6 +10,9 @@ import numpy as np
 
 from mcuboot_packets import *
 
+OPTION_OMIT_FRAMING_PACKET_CRC_BYTES = 0
+OPTION_INCLUDE_FRAMING_PACKET_CRC_BYTES = 1
+
 
 
 ## ---------------------------------------------------------------------
@@ -56,7 +59,7 @@ def calc_crc16_with_carry_in(byte_array_to_check, crc_from_caller):
 
 
 
-def bytes_of_framing_packet(framing_packet):
+def bytes_of_framing_packet(framing_packet, option_include_crc):
     bytes = [0, 0, 0, 0]
     bytes[0] = framing_packet.start_byte
     bytes[1] = framing_packet.packet_type
@@ -66,6 +69,11 @@ def bytes_of_framing_packet(framing_packet):
 # Note we skip returning the crc bytes per MCUBOOTRM.pdf, section 4.4 page 33
 #    bytes[3] = framing_packet.crc16_low
 #    bytes[3] = framing_packet.crc16_high
+
+    if (option_include_crc == 1):
+        bytes.append(framing_packet.crc16_low)
+        bytes.append(framing_packet.crc16_high)
+
     return bytes
 
 
@@ -100,12 +108,15 @@ def calc_len_and_crc_of(framing_pkt, command_hdr, command_pkt):
     framing_pkt.length_low = command_length & 0x00FF
     framing_pkt.length_high = command_length & 0xFF00
 
-    framing_bytes = bytes_of_framing_packet(framing_pkt)
+    framing_bytes = bytes_of_framing_packet(framing_pkt, OPTION_OMIT_FRAMING_PACKET_CRC_BYTES)
     command_bytes = bytes_of_command_packet(command_hdr, command_pkt)
 
     crc_framing = calc_crc16_with_carry_in(framing_bytes, 0)
 
     crc_command = calc_crc16_with_carry_in(command_bytes, crc_framing)
+
+    framing_pkt.crc16_low = crc_command & 0x00FF
+    framing_pkt.crc16_high = crc_command & 0xFF00
 
     print("present command has length %u" % command_length, end=" ")
     print("bytes,")
@@ -113,6 +124,13 @@ def calc_len_and_crc_of(framing_pkt, command_hdr, command_pkt):
     print("bytes.")
 
 ## WIP - building up to assign command length and packet CRC to framing packet
+
+# Reference https://www.freecodecamp.org/news/python-list-append-vs-python-list-extend/
+
+    bytes = bytes_of_framing_packet(framing_pkt, OPTION_INCLUDE_FRAMING_PACKET_CRC_BYTES)
+    bytes.extend(command_bytes)
+    return bytes
+
 
 
 
