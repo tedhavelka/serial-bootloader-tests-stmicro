@@ -268,6 +268,9 @@ def parse_packet(packet):
 
 # ----------------------------------------------------------------------
 #  @brief   Routine to display response from MCU bootloader.
+#
+#  2022-09-12 NEED to review this routine, may be superceded by
+#    newer routine(s) in mcuboot_command_handling.py.
 # ----------------------------------------------------------------------
 
 def listen_for_mcuboot_response(display_option):
@@ -437,6 +440,7 @@ if (1):
         val = serialString[0]
         print("0x%02x" % val, end=" ")
         print(serialString)
+#        print("0x%02x" % val, end=" ")
 
     print("\nINFO - response to ping command appears done.\n")
 
@@ -458,6 +462,9 @@ if (1):
 
     cmd = build_mcuboot_command__reset()
     display_packet_as_bytes(cmd)
+
+
+
 
 #    print("INFO - pausing ten seconds . . .")
 #    time.sleep(10)
