@@ -16,6 +16,8 @@
 
 from mcuboot_tags import *
 
+import crc16
+
 
 
 ## ---------------------------------------------------------------------
@@ -102,6 +104,25 @@ def display_packet_as_bytes(packet):
     for j in range(len(packet)):
         print("0x%02X" % packet[j], end=" ")
     print("")
+
+
+
+## ---------------------------------------------------------------------
+## - SECTION - routines for production use
+## ---------------------------------------------------------------------
+
+def build_mcuboot_command__reset():
+
+    framing = framing_packet(MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
+
+    header = command_packet_header(MCUBOOT_COMMAND_TAG__RESET)
+    header.parameter_count = 0
+
+    command = command_packet(header)
+
+    command_as_bytes = crc16.calc_len_and_crc_of(framing, header, command)
+
+    return command_as_bytes
 
 
 

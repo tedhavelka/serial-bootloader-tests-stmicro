@@ -84,7 +84,8 @@ def bytes_of_command_packet(command_hdr, command_pkt):
     bytes[2] = command_hdr.reserved
     bytes[3] = command_hdr.parameter_count
 
-    if (len(command_pkt.parameters) > 0):
+#    if (len(command_pkt.parameters) > 0):
+    if (command_pkt.parameters != None):
         print("routine 'bytes_of_command_packet' finds %u" % len(command_pkt.parameters), end=" ")
         print("parameters with present command.")
 
@@ -102,7 +103,11 @@ def bytes_of_command_packet(command_hdr, command_pkt):
 
 def calc_len_and_crc_of(framing_pkt, command_hdr, command_pkt):
 
-    command_length = COMMAND_HEADER_BYTE_COUNT + (SIZE_INT32 * len(command_pkt.parameters))
+    if(command_pkt.parameters != None):
+        command_length = COMMAND_HEADER_BYTE_COUNT + (SIZE_INT32 * len(command_pkt.parameters))
+    else:
+        command_length = COMMAND_HEADER_BYTE_COUNT
+
     framing_pkt.length_low = command_length & 0x00FF
     framing_pkt.length_high = command_length & 0xFF00
 

@@ -170,17 +170,22 @@ def send_command_bootloader_stmicro(command_as_bytes, send_count):
 
 ##----------------------------------------------------------------------
 ## @brief Routine to send command byte string to NXP bootloader
+##
+## Reference https://pyserial.readthedocs.io/en/latest/pyserial_api.html#serial.Serial.write
 ##----------------------------------------------------------------------
 
 def send_command_bootloader_nxp(command_as_bytes, send_count):
 
     command_get_attempts = 0
+    bytes_sent = 0
 
     while ( command_get_attempts < send_count ):
         command_get_attempts += 1
         time.sleep(CHOSEN_DELAY)
-        serialPort.write(command_as_bytes)
+        bytes_sent = serialPort.write(command_as_bytes)
+#        serialPort.write(bytes(command_as_bytes))
 
+    return bytes_sent
 
 
 # STMicro command definitions:
@@ -282,14 +287,18 @@ def listen_for_mcuboot_response(display_option):
 # When we detect an MCUBoot start byte then add a white space line for clarity of output:
         if ( val[0] == 0x5a ):
 
+##
+## WIP - following parsing needs to be replaced, will not work as its based on single byte single value test for 0x5a:
+##
+
 # Possible point of response packet processing here . . .
-            print()
-            print("received response of %u" % len(bootloader_response), end=" bytes.\n")
-            response_previous = []
-            response_previous.extend(bootloader_response)
-            print("copy of latest mcuboot response - ", response_previous)
-            bootloader_response = []
-            parse_packet(response_previous)
+#            print()
+#            print("received response of %u" % len(bootloader_response), end=" bytes.\n")
+#            response_previous = []
+#            response_previous.extend(bootloader_response)
+#            print("copy of latest mcuboot response - ", response_previous)
+#            bootloader_response = []
+#            parse_packet(response_previous)
             print()
 
         if (display_option == DISPLAY_BYTE_PER_LINE):
@@ -317,43 +326,47 @@ print("NXP bootloader client script starting,")
 # DEV TEST 1:
 # ----------------------------------------------------------------------
 
-print("bootloader generic response tag from included python file is", end=" ")
-print(hex(MCUBOOT_RESPONSE_TAG__GENERIC))
+# print("bootloader generic response tag from included python file is", end=" ")
+# print(hex(MCUBOOT_RESPONSE_TAG__GENERIC))
 
 
 # ----------------------------------------------------------------------
 # DEV TEST 2:
 # ----------------------------------------------------------------------
 
-# See NXP document MCUBOOTRM.pdf for xmodem CRC16 variant, this test string and expected 0x31c3 result:
-print("calling crc16 routine as test . . .")
-crc_test_sequence = [0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39]
-xmodem_crc16 = crc16.calc_crc16_with_carry_in(crc_test_sequence, 0)
-
-print("crc16 xmodem variant routine test gives", end=" ")
-print(hex(xmodem_crc16))
+## See NXP document MCUBOOTRM.pdf for xmodem CRC16 variant, this test string and expected 0x31c3 result:
+# print("calling crc16 routine as test . . .")
+# crc_test_sequence = [0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39]
+# xmodem_crc16 = crc16.calc_crc16_with_carry_in(crc_test_sequence, 0)
+#
+# print("crc16 xmodem variant routine test gives", end=" ")
+# print(hex(xmodem_crc16))
 
 
 # ----------------------------------------------------------------------
 # DEV TEST 4:
 # ----------------------------------------------------------------------
 
+# STEP 2 - create mcuboot framing packet
 first_packet = framing_packet(MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
 print("instantiated a first framinig packet, showing its content . . .")
-display_framing_packet(first_packet)
+# display_framing_packet(first_packet)
 
+# STEP 2 - create command header
 print("buidling command header and packet . . .")
 command_header = command_packet_header(MCUBOOT_COMMAND_TAG__READ_MEMORY)
 command_header.parameter_count = 2
 
+# STEP 3 - construct list of command parameters (not all commands have parameters)
 read_memory_parameters = [0x20000400, 0x00000064]
 
+# STEP 4 - construct command packet starting with header then add parameters
 command = command_packet(command_header)
 command.parameters = read_memory_parameters 
-
 print("showing command packet:")
 display_command_packet(command)
 
+# STEP 5 - construct complete mcuboot command packet, framing piece plus header plus parameters
 # Following routine knows how to take mcuboot framing packet, command packet, and build complete crc'd message:
 command_as_bytes = crc16.calc_len_and_crc_of(first_packet, command_header, command)
 
@@ -425,7 +438,7 @@ if (1):
         print("0x%02x" % val, end=" ")
         print(serialString)
 
-    print()
+    print("\nINFO - response to ping command appears done.\n")
 
 
 # ----------------------------------------------------------------------
@@ -439,10 +452,26 @@ if (1):
 
 
 
+# ----------------------------------------------------------------------
+# DEV TEST 6:
+# ----------------------------------------------------------------------
 
-    print("")
-    print("- INFO - response to ping command appears done.")
-    print("- STEP - reading serial port once more as a timeout test,")
+    cmd = build_mcuboot_command__reset()
+    display_packet_as_bytes(cmd)
+
+#    print("INFO - pausing ten seconds . . .")
+#    time.sleep(10)
+#
+#    cmd = [0x5a, 0xa6]
+#    print("\n\nsending NXP \"ping\" command", cmd, "two more times . . .")
+#    bytes_sent = send_command_bootloader_nxp(cmd, 2)
+#    print("INFO - sent", bytes_sent, "bytes")
+#
+#    listen_for_mcuboot_response(DISPLAY_PACKET_PER_LINE)
+
+
+
+    print("\n- STEP - reading serial port once more as a timeout test,")
     print("       ( timeout set to", end=" ")
     print(SERIAL_PORT_READ_TIMEOUT, end=" ")
     print(")")
