@@ -193,7 +193,6 @@ def send_command_bootloader_nxp(command_as_bytes, send_count):
         command_get_attempts += 1
         time.sleep(CHOSEN_DELAY)
         bytes_sent = serialPort.write(command_as_bytes)
-#        serialPort.write(bytes(command_as_bytes))
 
     return bytes_sent
 
@@ -436,7 +435,6 @@ if (1):
         val = serialString[0]
         print("0x%02x" % val, end=" ")
         print(serialString)
-#        print("0x%02x" % val, end=" ")
 
     print("\nINFO - response to ping command appears done.\n")
 
@@ -445,10 +443,10 @@ if (1):
 # DEV TEST 5:
 # ----------------------------------------------------------------------
 
-    print("DEV 5 - sending 'read memory' command . . .")
-    send_command_bootloader_nxp(command_as_bytes, 1)
-    listen_for_mcuboot_response(DISPLAY_PACKET_PER_LINE)
-    print()
+#    print("DEV 5 - sending 'read memory' command . . .")
+#    send_command_bootloader_nxp(command_as_bytes, 1)
+#    listen_for_mcuboot_response(DISPLAY_PACKET_PER_LINE)
+#    print()
 
 
 # ----------------------------------------------------------------------
