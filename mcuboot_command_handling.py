@@ -20,6 +20,7 @@ def to_see_command_through(cmd):
     bytes_sent = 0
     command_status = 0
     expected_responses_received = 0
+    response_present = []
 
     time.sleep(CHOSEN_DELAY)
     bytes_sent = serialPort.write(cmd)
@@ -27,6 +28,16 @@ def to_see_command_through(cmd):
 
 #    while(expected_responses_received == 0):
 #        listen_for_response(...)
+
+
+    while ( serialPort.in_waiting == 0 ):
+        time.sleep(CHOSEN_DELAY)
+
+    while ( serialPort.in_waiting > 0 ):
+        val = serialPort.read()
+        bootloader_response.append(val)
+
+
 
 
     return command_status

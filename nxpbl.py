@@ -417,13 +417,12 @@ if (0):
 
 
 
-# def send_command_bootloader_nxp(command_as_bytes, send_count):
 if (1):
     cmd = [0x5a, 0xa6]
     print("sending NXP \"ping\" command", end=" ")
     print(cmd, end=" ")
     print(". . .")
-    send_command_bootloader_nxp(cmd, 2)
+    send_command_bootloader_nxp(cmd, 1)
 
     print("waiting for response . . .")
     while ( serialPort.in_waiting == 0 ):
@@ -449,8 +448,8 @@ if (1):
 # DEV TEST 5:
 # ----------------------------------------------------------------------
 
-    print("DEV - sending 'read memory' command . . .")
-    send_command_bootloader_nxp(command_as_bytes, len(command_as_bytes))
+    print("DEV 5 - sending 'read memory' command . . .")
+    send_command_bootloader_nxp(command_as_bytes, 1)
 
     listen_for_mcuboot_response(DISPLAY_PACKET_PER_LINE)
 
@@ -463,18 +462,6 @@ if (1):
     cmd = build_mcuboot_command__reset()
     display_packet_as_bytes(cmd)
 
-
-
-
-#    print("INFO - pausing ten seconds . . .")
-#    time.sleep(10)
-#
-#    cmd = [0x5a, 0xa6]
-#    print("\n\nsending NXP \"ping\" command", cmd, "two more times . . .")
-#    bytes_sent = send_command_bootloader_nxp(cmd, 2)
-#    print("INFO - sent", bytes_sent, "bytes")
-#
-#    listen_for_mcuboot_response(DISPLAY_PACKET_PER_LINE)
 
 
 
