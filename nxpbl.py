@@ -1,17 +1,25 @@
+#
+#  @file nxpbl.py   NXP mcuboot bootloader host program
+#
+
+
+
+# python3 includes . . .
 import serial
 import time
 
 
-# 2022-09-07
-#
-#  (8)  https://learn.adafruit.com/micropython-basics-loading-modules/import-code
-
+# local project includes . . .
 from mcuboot_tags import *
 
 import crc16
 
-## Note:  from mcuboot_packets.py we are importing python classes to serve like C structures.
 from mcuboot_packets import *
+
+from mcuboot_command_handling import *
+
+from nxpbl_common import *
+
 
 
 # 2022-09-10 SAT
@@ -68,19 +76,21 @@ from mcuboot_packets import *
 # - SECTION - effective constants
 # ----------------------------------------------------------------------
 
-ONE_NANOSECOND           = 0.000000001
-ONE_MICROSECOND          = 0.000001
-TEN_MICROSECONDS         = 0.00001
-ONE_HUNDRED_MICROSECONDS = 0.0001
+# Note following now included, imported from file mcuboot_common.py . . .
 
-#CHOSEN_DELAY = ONE_HUNDRED_MICROSECONDS
-#CHOSEN_DELAY = TEN_MICROSECONDS
-CHOSEN_DELAY = ONE_NANOSECOND
+#ONE_NANOSECOND           = 0.000000001
+#ONE_MICROSECOND          = 0.000001
+#TEN_MICROSECONDS         = 0.00001
+#ONE_HUNDRED_MICROSECONDS = 0.0001
 
-SERIAL_PORT_READ_TIMEOUT = 0.00004340 # in seconds . . . was 1.0 seconds
+##CHOSEN_DELAY = ONE_HUNDRED_MICROSECONDS
+##CHOSEN_DELAY = TEN_MICROSECONDS
+#CHOSEN_DELAY = ONE_NANOSECOND
 
-DISPLAY_BYTE_PER_LINE = 1
-DISPLAY_PACKET_PER_LINE = 2
+#SERIAL_PORT_READ_TIMEOUT = 0.00004340 # in seconds . . . was 1.0 seconds
+
+#DISPLAY_BYTE_PER_LINE = 1
+#DISPLAY_PACKET_PER_LINE = 2
 
 
 
@@ -88,13 +98,13 @@ DISPLAY_PACKET_PER_LINE = 2
 # - SECTION - primary script scoped variables
 # ----------------------------------------------------------------------
 
-serialPort = serial.Serial(port = "/dev/ttyUSB0",
-                           baudrate=115200,
-                           bytesize=serial.EIGHTBITS,
-                           parity=serial.PARITY_NONE,   # PARITY_EVEN,
-                           stopbits=serial.STOPBITS_ONE,
-                           timeout=SERIAL_PORT_READ_TIMEOUT,
-                           write_timeout=2.0)
+#serialPort = serial.Serial(port = "/dev/ttyUSB0",
+#                           baudrate=115200,
+#                           bytesize=serial.EIGHTBITS,
+#                           parity=serial.PARITY_NONE,   # PARITY_EVEN,
+#                           stopbits=serial.STOPBITS_ONE,
+#                           timeout=SERIAL_PORT_READ_TIMEOUT,
+#                           write_timeout=2.0)
 
         
 serialString = ""                  # Used to hold data coming over UART
@@ -278,8 +288,8 @@ def listen_for_mcuboot_response(display_option):
     bootloader_response = []
     response_previous = []
 
-#    print("listener routine called to parse response . . .")
-    print("LISTENER ROUTINE CALLED TO PARSE RESPONSE . . .")
+    print("listener routine called to parse response . . .", end=" ")
+#    print("LISTENER ROUTINE CALLED TO PARSE RESPONSE . . .", end=" ")
     while ( serialPort.in_waiting == 0 ):
         time.sleep(CHOSEN_DELAY)
 
@@ -289,19 +299,6 @@ def listen_for_mcuboot_response(display_option):
 
 # When we detect an MCUBoot start byte then add a white space line for clarity of output:
         if ( val[0] == 0x5a ):
-
-##
-## WIP - following parsing needs to be replaced, will not work as its based on single byte single value test for 0x5a:
-##
-
-# Possible point of response packet processing here . . .
-#            print()
-#            print("received response of %u" % len(bootloader_response), end=" bytes.\n")
-#            response_previous = []
-#            response_previous.extend(bootloader_response)
-#            print("copy of latest mcuboot response - ", response_previous)
-#            bootloader_response = []
-#            parse_packet(response_previous)
             print()
 
         if (display_option == DISPLAY_BYTE_PER_LINE):
@@ -450,9 +447,8 @@ if (1):
 
     print("DEV 5 - sending 'read memory' command . . .")
     send_command_bootloader_nxp(command_as_bytes, 1)
-
     listen_for_mcuboot_response(DISPLAY_PACKET_PER_LINE)
-
+    print()
 
 
 # ----------------------------------------------------------------------
@@ -461,7 +457,7 @@ if (1):
 
     cmd = build_mcuboot_command__reset()
     display_packet_as_bytes(cmd)
-
+    send_and_see_command_through(cmd)
 
 
 

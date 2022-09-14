@@ -41,18 +41,14 @@ def calc_crc16_with_carry_in(byte_array_to_check, crc_from_caller):
 
         for i in range(8):
 
-#            print(byte_array_to_check[j], end=" temp: ")
-#            print(temp, end=" crc: ")
-#            print(crc)
             temp = crc << 1
-#            print("- DEV - about to xor present crc with value %d" % ((byte_array_to_check[j]) << 8) )
             if (crc & 0x8000):
                 temp ^= 0x1021
 
             crc = temp
 
     crc &= 0xFFFF                  # this routine a 16-bit CRC calculator so mask answer to 16 bits.
-    print("returning 0x%04x" % crc)
+#    print("returning 0x%04x" % crc)
     return crc
 
 

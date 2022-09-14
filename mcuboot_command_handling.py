@@ -1,4 +1,15 @@
 
+import time
+
+from mcuboot_packets import *
+
+from nxpbl_common import *         # to provide CHOSEN_DELAY and others
+
+
+
+# ----------------------------------------------------------------------
+# - SECTION - routines
+# ----------------------------------------------------------------------
 
 
 # ----------------------------------------------------------------------
@@ -15,29 +26,36 @@
 #
 # ----------------------------------------------------------------------
 
-def to_see_command_through(cmd):
+def display_byte_array(packet):
+    for byte in packet:
+        print("0x%02x" % int.from_bytes(byte, byteorder='little'), end=" ")
+    print()
+
+
+
+def send_and_see_command_through(cmd):
 
     bytes_sent = 0
     command_status = 0
     expected_responses_received = 0
-    response_present = []
+    mcuboot_response = []
 
     time.sleep(CHOSEN_DELAY)
     bytes_sent = serialPort.write(cmd)
     print("seeing command through, just sent", bytes_sent, "bytes")
-
-#    while(expected_responses_received == 0):
-#        listen_for_response(...)
-
 
     while ( serialPort.in_waiting == 0 ):
         time.sleep(CHOSEN_DELAY)
 
     while ( serialPort.in_waiting > 0 ):
         val = serialPort.read()
-        bootloader_response.append(val)
+        mcuboot_response.append(val)
 
 
+    print("- DEV 0913 -")
+#    display_packet_as_bytes(mcuboot_response)
+    display_byte_array(mcuboot_response)
+    print("- DEV 0913 -")
 
 
     return command_status
