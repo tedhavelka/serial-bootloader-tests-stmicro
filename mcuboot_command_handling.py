@@ -182,7 +182,7 @@ def send_and_see_command_through(cmd):
                 if(len(mcuboot_response) == response_length):
                     response_found = 1
                     response_type = int.from_bytes(mcuboot_response[1], "little")
-                    print("arriving response is of type", response_type)
+                    print("arriving response is of type 0x%02x" % response_type)
 
                     response_length_detected = 0
 

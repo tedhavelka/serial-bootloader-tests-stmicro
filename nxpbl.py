@@ -357,7 +357,8 @@ command_header = command_packet_header(MCUBOOT_COMMAND_TAG__READ_MEMORY)
 command_header.parameter_count = 2
 
 # STEP 3 - construct list of command parameters (not all commands have parameters)
-read_memory_parameters = [0x20000400, 0x00000064]
+#read_memory_parameters = [0x20000400, 0x00000064]
+read_memory_parameters = [0x00000000, 0x00000064]
 
 # STEP 4 - construct command packet starting with header then add parameters
 command = command_packet(command_header)
