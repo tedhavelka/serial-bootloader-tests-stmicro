@@ -86,16 +86,16 @@ def check_for_ack(packet):
 #         of the response packet.
 # ----------------------------------------------------------------------
 
-def check_for_response(packet):
+#def check_for_response(packet):
 #    print("stub 0913")
-    return 1
+#    return 1
 
 
 def parse_for_length_in(mcuboot_response):
 
     arriving_packet_length = 0
 
-    if(len(mcuboot_response) < 4):
+    if(len(mcuboot_response) < OFFSET_LAST_FRAMING_HEADER_BYTE_INDICATING_PACKET_LENGTH):
         print("WARNING - packet fragment too small to parse for packet length!")
         return 0
     else:
@@ -106,6 +106,37 @@ def parse_for_length_in(mcuboot_response):
         arriving_packet_length += LENGTH_MCUBOOT_FRAMING_PACKET
         return arriving_packet_length
 
+
+
+def show_memory_values_in(mcuboot_response):
+
+    if(len(mcuboot_response) <= LENGTH_MCUBOOT_FRAMING_PACKET):
+        print("WARNING - mcuboot packet too short to hold data!")
+        print("WARNING + script may be calling this routine too soon or at wrong time.")
+        return
+
+    if ((int.from_bytes(mcuboot_response[1], "little")) == 0xa5):
+        print("show-memory-values routine received an outgoing phase data packet.")
+    else:
+        print("WARNING - show-memory-values routine received packet of type %02x." % (int.from_bytes(mcuboot_response[1], "little")))
+        print("WARNING + not an mcuboot outgoing data phase packet,")
+        print("WARNING + returning early . . .")
+        return
+
+    print("zzzzzz")
+
+# Here outermost IF construct used to test for response tag type:
+    if (1):
+        i = 0
+        for i in range(len(mcuboot_response) - LENGTH_MCUBOOT_FRAMING_PACKET):
+            print("%02X" % (int.from_bytes(mcuboot_response[i + LENGTH_MCUBOOT_FRAMING_PACKET], "little")), end=" ")
+            if(i > 0):
+                if(((i + 1) % 8) == 0):
+                    print(" ", end=" ")
+                if(((i + 1) % 16) == 0):
+                    print(" ")
+
+    print("zzzzzz")
 
 
 
@@ -218,13 +249,19 @@ def send_and_see_command_through(cmd):
                 expected_responses_received += 1
                 print("received:", end=" ")
                 display_byte_array(mcuboot_response)
+
+                if(response_type == 0xa5):
+                    print("memory values in latest response:")
+                    show_memory_values_in(mcuboot_response)
+
                 mcuboot_response = []
                 response_found = 0
                 ack_just_sent = 0
 
+
 # send ACK following response packets:
-#        if(not ack_just_sent):
-        if(1):
+        if(not ack_just_sent):
+#        if(1):
             ack_just_sent = 1
             bytes_sent = serialPort.write(ACK)
             if(bytes_sent == len(ACK)):
@@ -235,6 +272,10 @@ def send_and_see_command_through(cmd):
 
 #   end python while construct - while(final_generic_response_not_received)
 
+###        show_memory_contents(memory_values)
+
+
+# NEED to capture mcuboot command status value from final generic response packet - TMH
     return command_status
 
 

@@ -32,8 +32,12 @@ import crc16
 ## ---------------------------------------------------------------------
 
 COMMAND_HEADER_BYTE_COUNT = 4
+
 SIZE_INT32 = 4
+
 LENGTH_MCUBOOT_FRAMING_PACKET = 6
+
+OFFSET_LAST_FRAMING_HEADER_BYTE_INDICATING_PACKET_LENGTH = 4
 
 
 
