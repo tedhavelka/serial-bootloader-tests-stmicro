@@ -91,21 +91,51 @@ def check_for_response(packet):
     return 1
 
 
+def parse_for_length_in(mcuboot_response):
+
+    arriving_packet_length = 0
+
+    if(len(mcuboot_response) < 4):
+        print("WARNING - packet fragment too small to parse for packet length!")
+        return 0
+    else:
+        print("DEV - parsing length from:", mcuboot_response[3], mcuboot_response[2])
+#        arriving_packet_length = ( (int(bytes(mcuboot_response[3])) << 8) + (int(bytes(mcuboot_response[2]))) )
+        arriving_packet_length = ( (int.from_bytes(mcuboot_response[2], "little"))
+                                + ((int.from_bytes(mcuboot_response[3], "little")) << 8) )
+        arriving_packet_length += LENGTH_MCUBOOT_FRAMING_PACKET
+        return arriving_packet_length
+
+
+
 
 def send_and_see_command_through(cmd):
 
+# --- VAR BEGIN ---
+
     bytes_sent = 0
     command_status = 0
-    expected_acks_received = 0
-    expected_responses_received = 0
+    expected_acks_received = 0     # NEED to review this variable
+    expected_responses_received = 0 # NEED to review this variable
 
     mcuboot_response = []
     ack_found = 0
     response_found = 0
 
-    ack = []
-    ack.append(0x5a)
-    ack.append(0xa1)
+#    ack = []
+#    ack.append(0x5a)
+#    ack.append(0xa1)
+
+# Used to detect various lengths of response packets from mcuboot bootloader
+    response_length = 0
+    response_length_detected = 0
+    response_type = 0
+    response_type_detected = 0
+
+# To receive second generic response in memory read command signifies all data sent to host
+    generic_response_count = 0
+
+# --- VAR END ---
 
 
     time.sleep(CHOSEN_DELAY)
@@ -122,7 +152,7 @@ def send_and_see_command_through(cmd):
     final_generic_response_not_received = 1
     ack_just_sent = 0
 
-    while (final_generic_response_not_received):
+    while (final_generic_response_not_received == 1):
 
         while ( serialPort.in_waiting == 0 ):
             time.sleep(CHOSEN_DELAY)
@@ -131,12 +161,47 @@ def send_and_see_command_through(cmd):
             val = serialPort.read()
             mcuboot_response.append(val)
 
+
+## ----------------------------------------------------------------------
+##  STEP - detect packet types . . .
+## ----------------------------------------------------------------------
+
             if(len(mcuboot_response) == 2):
                 ack_found = check_for_ack(mcuboot_response)
 
 # NEED to improve following IF test to handle packets which are not 18 bytes long - TMH
-            if(len(mcuboot_response) == 18):
-                response_found = check_for_response(mcuboot_response)
+#            if(len(mcuboot_response) == 18):
+#                response_found = check_for_response(mcuboot_response)
+
+            if(len(mcuboot_response) == 4):
+                response_length = parse_for_length_in(mcuboot_response)
+                print("present response to be", response_length, "bytes long,")
+                response_length_detected = 1
+
+            if(response_length_detected):
+                if(len(mcuboot_response) == response_length):
+                    response_found = 1
+                    response_type = int.from_bytes(mcuboot_response[1], "little")
+                    print("arriving response is of type", response_type)
+
+                    response_length_detected = 0
+
+
+## ----------------------------------------------------------------------
+##  STEP - track multi-packet events
+## ----------------------------------------------------------------------
+
+            if(response_type == 0xa4):
+                generic_response_count += 1
+                response_type = 0
+
+            if(generic_response_count >= 2):
+                final_generic_response_not_received = 0
+
+
+## ----------------------------------------------------------------------
+##  STEP - respond to packet types . . .
+## ----------------------------------------------------------------------
 
             if(ack_found):
                 expected_acks_received += 1
