@@ -419,9 +419,9 @@ if (1):
 # DEV TEST 6:
 # ----------------------------------------------------------------------
 
-    cmd = build_mcuboot_command__reset()
-    display_packet_as_bytes(cmd)
-    send_and_see_command_through(cmd)
+#    cmd = build_mcuboot_command__reset()
+#    display_packet_as_bytes(cmd)
+#    send_and_see_command_through(cmd)
 
 
 

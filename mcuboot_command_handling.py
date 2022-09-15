@@ -7,7 +7,7 @@ from nxpbl_common import *         # to provide CHOSEN_DELAY and others
 
 
 
-DIAG__SHOW_DATA_TYPE_IN_ROUTINE__DISPLAY_BYTE_ARRAY = 1
+DIAG__SHOW_DATA_TYPE_IN_ROUTINE__DISPLAY_BYTE_ARRAY = 0
 
 
 
@@ -123,10 +123,10 @@ def send_and_see_command_through(cmd):
             response_found = check_for_response(mcuboot_response)
 
         if(ack_found):
-#            print("received ACK packet!")
-            print("received:", end=" ")
+            print("received ACK packet!")
+#            print("received:", end=" ")
             expected_acks_received += 1
-            display_byte_array(mcuboot_response)
+#            display_byte_array(mcuboot_response)
             mcuboot_response = []
             ack_found = 0
 
