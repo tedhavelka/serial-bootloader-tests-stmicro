@@ -53,6 +53,12 @@ def calc_crc16_with_carry_in(byte_array_to_check, crc_from_caller):
 
 
 
+#
+##  NEED 2022-09-14 - need to review use of 'bytes' python keyword in,
+##   this routine.  When we wrote this did not realize 'bytes' is a
+##   keyword:  - TMH
+#
+
 def bytes_of_framing_packet(framing_packet, option_include_crc):
     bytes = [0, 0, 0, 0]
     bytes[0] = framing_packet.start_byte

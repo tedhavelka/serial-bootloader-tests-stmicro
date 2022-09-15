@@ -7,6 +7,10 @@ from nxpbl_common import *         # to provide CHOSEN_DELAY and others
 
 
 
+DIAG__SHOW_DATA_TYPE_IN_ROUTINE__DISPLAY_BYTE_ARRAY = 1
+
+
+
 # ----------------------------------------------------------------------
 # - SECTION - routines
 # ----------------------------------------------------------------------
@@ -27,10 +31,34 @@ from nxpbl_common import *         # to provide CHOSEN_DELAY and others
 # ----------------------------------------------------------------------
 
 def display_byte_array(packet):
-    for byte in packet:
-        if (int.from_bytes(byte, byteorder='little') == MCUBOOT_BOOTLOADER_START_BYTE):
+
+    count_start_bytes_detected = 0
+
+    for j in range(len(packet)):
+
+        if(packet[j] == 0x5a):
+            count_start_bytes_detected += 1
+
+        if((packet[j] == 0x5a) and (count_start_bytes_detected > 1)):
             print()
-        print("0x%02x" % int.from_bytes(byte, byteorder='little'), end=" ")
+
+#        if(len(packet) > 2):
+        if(isinstance(packet[j], int)):
+            print("%02x" % packet[j], end=" ")
+
+        elif(isinstance(packet[j], bytes)):
+            int_val = int.from_bytes(bytes(packet[j]), "little")
+            print("%02x" % int_val, end=" ")
+
+        else:
+            print(packet[j], end=" ")
+
+
+# Reference https://www.freecodecamp.org/news/python-print-type-of-variable-how-to-get-var-type/
+    if(DIAG__SHOW_DATA_TYPE_IN_ROUTINE__DISPLAY_BYTE_ARRAY):
+        print("\nDEV 0914 - parameter 'packet' is of type", type(packet))
+        print("DEV 0914 - parameter 'packet[0]' is of type", type(packet[0]))
+
     print()
 
 
@@ -51,7 +79,7 @@ def check_for_ack(packet):
 
 
 def check_for_response(packet):
-    print("stub 0913")
+#    print("stub 0913")
     return 0
 
 
@@ -67,9 +95,16 @@ def send_and_see_command_through(cmd):
     ack_found = 0
     response_found = 0
 
+    ack = []
+    ack.append(0x5a)
+    ack.append(0xa1)
+
+
     time.sleep(CHOSEN_DELAY)
     bytes_sent = serialPort.write(cmd)
     print("seeing command through, just sent", bytes_sent, "bytes")
+    print("    sent:", end=" ")
+    display_byte_array(cmd)
 
 #
 # - mcuboot response reading section
@@ -88,33 +123,42 @@ def send_and_see_command_through(cmd):
             response_found = check_for_response(mcuboot_response)
 
         if(ack_found):
-            print("received ACK packet!")
+#            print("received ACK packet!")
+            print("received:", end=" ")
             expected_acks_received += 1
             display_byte_array(mcuboot_response)
             mcuboot_response = []
             ack_found = 0
 
         if(response_found):
-            print("received response packet . . .")
+#            print("received response packet . . .")
+            print("received:", end=" ")
             expected_responses_received += 1
+            display_byte_array(mcuboot_response)
+            mcuboot_response = []
             response_found = 0
-
-    print("response: ", end=" ")
-    display_byte_array(mcuboot_response)
-#    print("- DEV 0913 -")
-
 
 
 # construct mcuboot ACK packet:
-    cmd = [0x5a, 0xa1]
+#    x = '5aa1'
+#    cmd[0] = 0x5a, cmd[1] = 0xa1 . . . python syntax error 'cannot assign to literal'
+# Reference https://www.w3resource.com/python/python-bytes.php#bliterals
+#    cmd = bytes.fromhex(x)
+#    print("DEV 0914-b - parameter 'cmd' is of type", type(cmd))
+#    ack = mcuboot_ack_packet()
+#    print("DEV 0914-b - class instance 'ack' is of type", type(ack))
+#    print("DEV 0914-b - global variable 'ACK' is of type", type(ACK))
+
 
     time.sleep(0.1)
-# send ACK:
-    print("- DEV 0913 - sending ACK to bootloader . . .")
-    bytes_sent = serialPort.write(cmd)
+#    display_byte_array(ACK)
+    bytes_sent = serialPort.write(ACK)
+    if(bytes_sent == 2):
+        print("    sent:", end=" ")
+        display_byte_array(ACK)
+    else:
+        print("WARNING - sent something shorter or longer than ACK packet!")
 
-    print("- DEV 0913 - sent %u bytes," % bytes_sent)
-    print("- DEV 0913 - waiting for response . . .")
     while ( serialPort.in_waiting == 0 ):
         time.sleep(CHOSEN_DELAY)
 
@@ -122,9 +166,29 @@ def send_and_see_command_through(cmd):
         val = serialPort.read()
         mcuboot_response.append(val)
 
+        if(len(mcuboot_response) == 2):
+            ack_found = check_for_ack(mcuboot_response)
 
-    print("response: ", end=" ")
-    display_byte_array(mcuboot_response)
+        if(len(mcuboot_response) == 18):
+            response_found = check_for_response(mcuboot_response)
+
+        if(ack_found):
+#            print("received ACK packet!")
+            print("received:", end=" ")
+            expected_acks_received += 1
+            display_byte_array(mcuboot_response)
+            mcuboot_response = []
+            ack_found = 0
+
+        if(response_found):
+#            print("received response packet . . .")
+            print("received:", end=" ")
+            expected_responses_received += 1
+            display_byte_array(mcuboot_response)
+            mcuboot_response = []
+            response_found = 0
+
+
 
 
     return command_status

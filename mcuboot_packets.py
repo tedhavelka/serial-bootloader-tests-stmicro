@@ -45,6 +45,15 @@ SIZE_INT32 = 4
 
 ## MCUBOOTRM.pdf section 4.4:
 
+class mcuboot_ack_packet:
+    def __init__(self):
+        self.start_byte = MCUBOOT_BOOTLOADER_START_BYTE
+        self.framing_packet_type = MCUBOOT_FRAMING_PACKET_TYPE__ACK
+
+
+ACK = [0x5a, 0xa1]
+
+
 class framing_packet:
     def __init__(self, packet_type):
         self.start_byte = MCUBOOT_BOOTLOADER_START_BYTE

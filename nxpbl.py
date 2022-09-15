@@ -374,42 +374,7 @@ print("bytes.")
 
 display_packet_as_bytes(command_as_bytes)
 
-print("INFO: dev tests done.")
 
-
-
-## ---------------------------------------------------------------------
-## Note:  STMicro ROM based bootloader expects an initial byte holding
-##  0x7F as a sign to commence firmware updating over a serial protocol.
-
-if (0):
-    send_bootloader_cmd(command_with_xor(BOOTLOADER_COMMAND__GET),         1)
-
-#latest_byte = send_bootloader_cmd(command_with_xor(BOOTLOADER_COMMAND__GET_ID), 1)
-#print("latest byte received is ", end=" ")
-#print(latest_byte)
-#latest_byte = send_bootloader_cmd(command_with_xor(BOOTLOADER_COMMAND__GET_ID), 1)
-#print("latest byte received is ", end=" ")
-#print(latest_byte)
-
-if (0):
-    send_bootloader_cmd(command_with_xor(BOOTLOADER_COMMAND__GET_ID), 1)
-
-#latest_byte = send_bootloader_cmd(command_with_xor(BOOTLOADER_COMMAND__READ), 1)
-#print("latest byte received is ", end=" ")
-#print(latest_byte)
-#latest_byte = send_bootloader_cmd(command_with_xor(BOOTLOADER_COMMAND__READ), 1)
-#print("latest byte received is ", end=" ")
-#print(latest_byte)
-
-if (0):
-    print("sending read command . . .")
-    send_bootloader_cmd(command_with_xor(BOOTLOADER_COMMAND__READ), 1)
-
-    address_with_checksum = memory_address_with_crc(0x08000000)
-
-    print("sending address to start of flash . . .")
-    send_address_of_memory(address_with_checksum)
 
 
 
@@ -443,10 +408,11 @@ if (1):
 # DEV TEST 5:
 # ----------------------------------------------------------------------
 
-#    print("DEV 5 - sending 'read memory' command . . .")
+    print("DEV 5 - sending 'read memory' command . . .")
 #    send_command_bootloader_nxp(command_as_bytes, 1)
 #    listen_for_mcuboot_response(DISPLAY_PACKET_PER_LINE)
 #    print()
+    send_and_see_command_through(command_as_bytes)
 
 
 # ----------------------------------------------------------------------
@@ -458,6 +424,8 @@ if (1):
     send_and_see_command_through(cmd)
 
 
+
+    print("INFO: dev tests done.")
 
     print("\n- STEP - reading serial port once more as a timeout test,")
     print("       ( timeout set to", end=" ")
