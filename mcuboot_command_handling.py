@@ -114,93 +114,64 @@ def send_and_see_command_through(cmd):
     print("    sent:", end=" ")
     display_byte_array(cmd)
 
-#
+
+# ----------------------------------------------------------------------
 # - mcuboot response reading section
-#
-    while ( serialPort.in_waiting == 0 ):
-        time.sleep(CHOSEN_DELAY)
+# ----------------------------------------------------------------------
 
-    while ( serialPort.in_waiting > 0 ):
-        val = serialPort.read()
-        mcuboot_response.append(val)
+    final_generic_response_not_received = 1
+    ack_just_sent = 0
 
-        if(len(mcuboot_response) == 2):
-            ack_found = check_for_ack(mcuboot_response)
+    while (final_generic_response_not_received):
+
+        while ( serialPort.in_waiting == 0 ):
+            time.sleep(CHOSEN_DELAY)
+
+        while ( serialPort.in_waiting > 0 ):
+            val = serialPort.read()
+            mcuboot_response.append(val)
+
+            if(len(mcuboot_response) == 2):
+                ack_found = check_for_ack(mcuboot_response)
 
 # NEED to improve following IF test to handle packets which are not 18 bytes long - TMH
-        if(len(mcuboot_response) == 18):
-            response_found = check_for_response(mcuboot_response)
+            if(len(mcuboot_response) == 18):
+                response_found = check_for_response(mcuboot_response)
 
-        if(ack_found):
-            expected_acks_received += 1
-            if(0):
-                print("received ACK packet!")
-            else:
+            if(ack_found):
+                expected_acks_received += 1
+                if(0):
+                    print("received ACK packet!")
+                else:
+                    print("received:", end=" ")
+                    display_byte_array(mcuboot_response)
+                mcuboot_response = []
+                ack_found = 0
+                ack_just_sent = 0
+
+            if(response_found):
+                expected_responses_received += 1
                 print("received:", end=" ")
                 display_byte_array(mcuboot_response)
-            mcuboot_response = []
-            ack_found = 0
+                mcuboot_response = []
+                response_found = 0
+                ack_just_sent = 0
 
-        if(response_found):
-            expected_responses_received += 1
-#            print("received response packet . . .")
-            print("received:", end=" ")
-            display_byte_array(mcuboot_response)
-            mcuboot_response = []
-            response_found = 0
+# send ACK following response packets:
+#        if(not ack_just_sent):
+        if(1):
+            ack_just_sent = 1
+            bytes_sent = serialPort.write(ACK)
+            if(bytes_sent == len(ACK)):
+                print("    sent:", end=" ")
+                display_byte_array(ACK)
+            else:
+                print("WARNING - failed to send normal two bytes of ACK packet!")
 
-
-# construct mcuboot ACK packet:
-#    x = '5aa1'
-#    cmd[0] = 0x5a, cmd[1] = 0xa1 . . . python syntax error 'cannot assign to literal'
-# Reference https://www.w3resource.com/python/python-bytes.php#bliterals
-#    cmd = bytes.fromhex(x)
-#    print("DEV 0914-b - parameter 'cmd' is of type", type(cmd))
-#    ack = mcuboot_ack_packet()
-#    print("DEV 0914-b - class instance 'ack' is of type", type(ack))
-#    print("DEV 0914-b - global variable 'ACK' is of type", type(ACK))
-
-
-    time.sleep(0.1)
-#    display_byte_array(ACK)
-    bytes_sent = serialPort.write(ACK)
-    if(bytes_sent == 2):
-        print("    sent:", end=" ")
-        display_byte_array(ACK)
-    else:
-        print("WARNING - sent something shorter or longer than ACK packet!")
-
-    while ( serialPort.in_waiting == 0 ):
-        time.sleep(CHOSEN_DELAY)
-
-    while ( serialPort.in_waiting > 0 ):
-        val = serialPort.read()
-        mcuboot_response.append(val)
-
-        if(len(mcuboot_response) == 2):
-            ack_found = check_for_ack(mcuboot_response)
-
-        if(len(mcuboot_response) == 18):
-            response_found = check_for_response(mcuboot_response)
-
-        if(ack_found):
-#            print("received ACK packet!")
-            print("received:", end=" ")
-            expected_acks_received += 1
-            display_byte_array(mcuboot_response)
-            mcuboot_response = []
-            ack_found = 0
-
-        if(response_found):
-#            print("received response packet . . .")
-            print("received:", end=" ")
-            expected_responses_received += 1
-            display_byte_array(mcuboot_response)
-            mcuboot_response = []
-            response_found = 0
-
-
-
+#   end python while construct - while(final_generic_response_not_received)
 
     return command_status
+
+
+
 
