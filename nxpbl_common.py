@@ -18,8 +18,11 @@ DISPLAY_PACKET_PER_LINE = 2
 
 
 
+# 2022-09-15 - trying slower baud rates, started out at 115200 . . .
+
 serialPort = serial.Serial(port = "/dev/ttyUSB0",
-                           baudrate=115200,
+#                           baudrate=115200,
+                           baudrate=38400,
                            bytesize=serial.EIGHTBITS,
                            parity=serial.PARITY_NONE,   # PARITY_EVEN,
                            stopbits=serial.STOPBITS_ONE,

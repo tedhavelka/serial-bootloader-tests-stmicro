@@ -78,9 +78,17 @@ def check_for_ack(packet):
 
 
 
+# ----------------------------------------------------------------------
+# @brief  Initially this routine is a stub, always returning effectively
+#         the value 'true'.  We'll add to it such that we check also
+#         for mcuboot response integrity, by calculating its checksum
+#         and comparing that with the checksum which arrived as part
+#         of the response packet.
+# ----------------------------------------------------------------------
+
 def check_for_response(packet):
 #    print("stub 0913")
-    return 0
+    return 1
 
 
 
@@ -119,21 +127,24 @@ def send_and_see_command_through(cmd):
         if(len(mcuboot_response) == 2):
             ack_found = check_for_ack(mcuboot_response)
 
+# NEED to improve following IF test to handle packets which are not 18 bytes long - TMH
         if(len(mcuboot_response) == 18):
             response_found = check_for_response(mcuboot_response)
 
         if(ack_found):
-            print("received ACK packet!")
-#            print("received:", end=" ")
             expected_acks_received += 1
-#            display_byte_array(mcuboot_response)
+            if(0):
+                print("received ACK packet!")
+            else:
+                print("received:", end=" ")
+                display_byte_array(mcuboot_response)
             mcuboot_response = []
             ack_found = 0
 
         if(response_found):
+            expected_responses_received += 1
 #            print("received response packet . . .")
             print("received:", end=" ")
-            expected_responses_received += 1
             display_byte_array(mcuboot_response)
             mcuboot_response = []
             response_found = 0
