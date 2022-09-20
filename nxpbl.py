@@ -22,6 +22,8 @@ from mcuboot_command_handling import *
 
 from nxpbl_common import *
 
+from build_command import *
+
 
 
 # 2022-09-10 SAT
@@ -348,36 +350,35 @@ print("NXP bootloader client script starting,")
 # DEV TEST 4:
 # ----------------------------------------------------------------------
 
-# STEP 2 - create mcuboot framing packet
-first_packet = framing_packet(MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
-print("instantiated a first framinig packet, showing its content . . .")
-# display_framing_packet(first_packet)
+if (0):
+# STEP 1 - create mcuboot framing packet
+    first_packet = framing_packet(MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
+    print("instantiated a first framing packet, showing its content . . .")
+#     display_framing_packet(first_packet)
 
 # STEP 2 - create command header
-print("buidling command header and packet . . .")
-command_header = command_packet_header(MCUBOOT_COMMAND_TAG__READ_MEMORY)
-command_header.parameter_count = 2
+    print("buidling command header and packet . . .")
+    command_header = command_packet_header(MCUBOOT_COMMAND_TAG__READ_MEMORY)
+    command_header.parameter_count = 2
 
 # STEP 3 - construct list of command parameters (not all commands have parameters)
-#read_memory_parameters = [0x20000400, 0x00000064]
-read_memory_parameters = [0x00000000, 0x00000040]
+#    read_memory_parameters = [0x20000400, 0x00000064]
+    read_memory_parameters = [0x00000000, 0x00004000]
 
 # STEP 4 - construct command packet starting with header then add parameters
-command = command_packet(command_header)
-command.parameters = read_memory_parameters 
-print("showing command packet:")
-display_command_packet(command)
+    command = command_packet(command_header)
+    command.parameters = read_memory_parameters 
+    print("showing command packet:")
+    display_command_packet(command)
 
 # STEP 5 - construct complete mcuboot command packet, framing piece plus header plus parameters
 # Following routine knows how to take mcuboot framing packet, command packet, and build complete crc'd message:
-command_as_bytes = crc16.calc_len_and_crc_of(first_packet, command_header, command)
+    command_as_bytes = crc16.calc_len_and_crc_of(first_packet, command_header, command)
 
-print("DEV TEST 4 - read memory command with framing entails %u" % len(command_as_bytes), end=" ")
-print("bytes.")
+    print("DEV TEST 4 - read memory command with framing entails %u" % len(command_as_bytes), end=" ")
+    print("bytes.")
 
-display_packet_as_bytes(command_as_bytes)
-
-
+    display_packet_as_bytes(command_as_bytes)
 
 
 
@@ -411,10 +412,8 @@ if (1):
 # DEV TEST 5:
 # ----------------------------------------------------------------------
 
+if (0):
     print("DEV 5 - sending 'read memory' command . . .")
-#    send_command_bootloader_nxp(command_as_bytes, 1)
-#    listen_for_mcuboot_response(DISPLAY_PACKET_PER_LINE)
-#    print()
     send_and_see_command_through(command_as_bytes)
 
 
@@ -422,11 +421,19 @@ if (1):
 # DEV TEST 6:
 # ----------------------------------------------------------------------
 
-#    cmd = build_mcuboot_command__reset()
-#    display_packet_as_bytes(cmd)
-#    send_and_see_command_through(cmd)
+if (1):
+    print("DEV 6 - erase region test . . .")
+    start_addr = 0x00000000
+    byte_count = 0x00000200
+    present_command = build_mcuboot_command_packet(MCUBOOT_COMMAND_TAG__FLASH_ERASE_REGION, start_addr, byte_count, None, None)
+
+    print("erase region command packet holds:")
+    display_packet_as_bytes(present_command)
 
 
+# ----------------------------------------------------------------------
+# END OF DEVELOPMENT TESTS:
+# ----------------------------------------------------------------------
 
     print("INFO: dev tests done.")
 
