@@ -101,6 +101,7 @@ def display_framing_packet(packet):
     print("crc16 high:  0x%02x" % packet.crc16_high)
 
 
+
 def display_command_packet(packet):
     print("DEV - preset command packet holds:")
     print("command or response tag:  0x%02x" % packet.header.command_or_response_tag)

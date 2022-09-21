@@ -404,7 +404,7 @@ if (1):
     command_header.parameter_count = 2
 
 # STEP 3 - construct list of command parameters (not all commands have parameters)
-    read_memory_parameters = [0x00000100, 0x00004000]
+    read_memory_parameters = [0x00000200, 0x00000240]
 
 # STEP 4 - construct command packet starting with header then add parameters
     command = command_packet(command_header)
@@ -441,6 +441,16 @@ if (0):
 
     send_and_see_command_through(present_command)
 
+
+
+# ----------------------------------------------------------------------
+# DEV TEST 7:
+# ----------------------------------------------------------------------
+
+if (1):
+    print("0921 - testing read file routine, will read five lines . . .")
+    read_file_for_firmware('notes/blinky.bin')
+    print("0921 - test done.")
 
 
 # ----------------------------------------------------------------------

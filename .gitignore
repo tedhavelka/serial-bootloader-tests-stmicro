@@ -6,3 +6,4 @@ share/
 stash/
 defines/__pycache__/
 __pycache__/
+*.swp

@@ -138,6 +138,22 @@ def calc_len_and_crc_of(framing_pkt, command_hdr, command_pkt):
 
 
 
+def calc_len_and_crc_of_data_pkt(framing_pkt, payload):
+
+    framing_bytes = bytes_of_framing_packet(framing_pkt, OPTION_OMIT_FRAMING_PACKET_CRC_BYTES)
+
+    data_bytes = bytes_of_data_payload(payload)
+
+    crc_framing = calc_crc16_with_carry_in(framing_bytes, 0)
+
+    crc_data = calc_crc16_with_carry_in(data_bytes, crc_framing)
+
+    framing_pkt.crc16_low  =  crc_data & 0x00FF
+    framing_pkt.crc16_high = (crc_data & 0xFF00) >> 8
+
+    bytes = bytes_of_framing_packet(framing_pkt, OPTION_INCLUDE_FRAMING_PACKET_CRC_BYTES)
+    bytes.extend(data_bytes)
+    return bytes
 
 
 

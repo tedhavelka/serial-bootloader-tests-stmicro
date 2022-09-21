@@ -1,3 +1,9 @@
+# ----------------------------------------------------------------------
+#  @project   Python3 based bootloader host work
+#
+#  @file      build_command.py
+# ----------------------------------------------------------------------
+
 
 
 from mcuboot_packets import *
@@ -43,3 +49,19 @@ def build_mcuboot_command_packet(command_tag, param_1, param_2, param_3, param_4
     display_packet_as_bytes(command_as_bytes)
 
     return command_as_bytes
+
+
+
+def build_data_packet(data):
+
+    framing_pkt = framing_packet(MCUBOOT_FRAMING_PACKET_TYPE__DATA)
+
+    data_packet_as_bytes = crc16.calc_len_and_crc_of_data_pkt(framing_pkt, data)
+
+    return data_packet_as_bytes
+
+
+
+
+
+# --- EOF ---

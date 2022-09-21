@@ -49,6 +49,9 @@ From our client script perspective we support this bootloader interaction with a
 
 
 
+#
+# 
+#
 
 A command with out-going data phase is diagrammed in MCUBOOTRM.pdf on page 26, looks like:
 
