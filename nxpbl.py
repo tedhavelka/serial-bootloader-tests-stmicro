@@ -68,6 +68,11 @@ from build_command import *
 #  (11)  https://www.alpharithms.com/python-bytearray-built-in-function-123516/
 #
 #
+# 2022-09-20
+#
+#  (12)  https://www.digitalocean.com/community/tutorials/read-stdin-python
+#
+#
 # Tangential topics:
 #
 #  (tan-1)  https://www.techonthenet.com/ascii/chart.php
@@ -119,8 +124,7 @@ bootloader_handshake_attempts = 0  # bound loop iterations to finite value
 
 HANDSHAKE_ATTEMPTS_TO_MAKE = 4     # . . . was 20
 
-#tries = 0
-
+# NEED TO REVIEW following three variables:
 command_to_bootloader = 0
 command_get_attempts = 0
 COMMAND_GET_ATTEMPTS_TO_MAKE = 2
@@ -347,40 +351,18 @@ print("NXP bootloader client script starting,")
 
 
 # ----------------------------------------------------------------------
-# DEV TEST 4:
+# DEV TEST 3:  removed
 # ----------------------------------------------------------------------
 
-if (0):
-# STEP 1 - create mcuboot framing packet
-    first_packet = framing_packet(MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
-    print("instantiated a first framing packet, showing its content . . .")
-#     display_framing_packet(first_packet)
-
-# STEP 2 - create command header
-    print("buidling command header and packet . . .")
-    command_header = command_packet_header(MCUBOOT_COMMAND_TAG__READ_MEMORY)
-    command_header.parameter_count = 2
-
-# STEP 3 - construct list of command parameters (not all commands have parameters)
-#    read_memory_parameters = [0x20000400, 0x00000064]
-    read_memory_parameters = [0x00000000, 0x00004000]
-
-# STEP 4 - construct command packet starting with header then add parameters
-    command = command_packet(command_header)
-    command.parameters = read_memory_parameters 
-    print("showing command packet:")
-    display_command_packet(command)
-
-# STEP 5 - construct complete mcuboot command packet, framing piece plus header plus parameters
-# Following routine knows how to take mcuboot framing packet, command packet, and build complete crc'd message:
-    command_as_bytes = crc16.calc_len_and_crc_of(first_packet, command_header, command)
-
-    print("DEV TEST 4 - read memory command with framing entails %u" % len(command_as_bytes), end=" ")
-    print("bytes.")
-
-    display_packet_as_bytes(command_as_bytes)
+# ----------------------------------------------------------------------
+# DEV TEST 4:  removed
+# ----------------------------------------------------------------------
 
 
+
+# ----------------------------------------------------------------------
+# SEND MCUBOOT PING PACKET 0x5AA6 . . .
+# ----------------------------------------------------------------------
 
 if (1):
     cmd = [0x5a, 0xa6]
@@ -412,16 +394,43 @@ if (1):
 # DEV TEST 5:
 # ----------------------------------------------------------------------
 
-if (0):
+if (1):
+# STEP 1 - create mcuboot framing packet
+    first_packet = framing_packet(MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
+
+# STEP 2 - create command header
+    print("buidling command header and packet . . .")
+    command_header = command_packet_header(MCUBOOT_COMMAND_TAG__READ_MEMORY)
+    command_header.parameter_count = 2
+
+# STEP 3 - construct list of command parameters (not all commands have parameters)
+    read_memory_parameters = [0x00000100, 0x00004000]
+
+# STEP 4 - construct command packet starting with header then add parameters
+    command = command_packet(command_header)
+    command.parameters = read_memory_parameters 
+    print("showing command packet:")
+    display_command_packet(command)
+
+# STEP 5 - construct complete mcuboot command packet, framing piece plus header plus parameters
+# Following routine knows how to take mcuboot framing packet, command packet, and build complete crc'd message:
+    command_as_bytes = crc16.calc_len_and_crc_of(first_packet, command_header, command)
+
+    print("DEV TEST 4 - read memory command with framing entails %u" % len(command_as_bytes), end=" ")
+    print("bytes.")
+
+    display_packet_as_bytes(command_as_bytes)
+
     print("DEV 5 - sending 'read memory' command . . .")
     send_and_see_command_through(command_as_bytes)
+
 
 
 # ----------------------------------------------------------------------
 # DEV TEST 6:
 # ----------------------------------------------------------------------
 
-if (1):
+if (0):
     print("DEV 6 - erase region test . . .")
     start_addr = 0x00000000
     byte_count = 0x00000200
@@ -429,6 +438,9 @@ if (1):
 
     print("erase region command packet holds:")
     display_packet_as_bytes(present_command)
+
+    send_and_see_command_through(present_command)
+
 
 
 # ----------------------------------------------------------------------

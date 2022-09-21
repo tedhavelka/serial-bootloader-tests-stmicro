@@ -1,0 +1,141 @@
+
+
+2022-09-20
+Per document MCUBOOTRM.pdf, mcuboot commands can be categorized into three types:
+
+(1)  command with no data phase
+
+(2)  command with out-going data phase from bootloader perspective
+
+(3)  command with in-going data phase from bootloader perspective
+
+
+
+A command with no data phase is diagrammed in MCUBOOTRM.pdf on page 26.  An ASCII art transription of this diagram looks like:
+
+
+   Host / client                       mcuboot
+       |                                  |               .
+       |             command              |               .
+       | -------------------------------> |               .
+       |               ACK                |               .
+       | < - - - - - - - - - - - - - - -  |               .
+       |                                  |               .
+       |                                  |               .
+       |             response             |               .
+       | <------------------------------- |               .
+       |               ACK                |               .
+       | - - - - - - - - - - - - - - - >  |               .
+       |                                  |               .
+
+
+
+From our client script perspective we support this bootloader interaction with a series of writes and a read in between.  There is or can be additional logic to parse responses, logic not detailed here:
+
+
+   Host / client                       mcuboot
+       |                                  |               .
+       |             command              |               .
+       | -------------------------------> |               .   serialPort.write(command)
+       |               ACK                |               .
+       | < - - - - - - - - - - - - - - -  |               .   serialPort.read(response)
+       |                                  |               .
+       |                                  |               .
+       |             response             |               .
+       | <------------------------------- |               .
+       |               ACK                |               .
+       | - - - - - - - - - - - - - - - >  |               .   serialPort.write(command)
+       |                                  |               .
+
+
+
+
+A command with out-going data phase is diagrammed in MCUBOOTRM.pdf on page 26, looks like:
+
+
+   Host / client                       mcuboot
+       |                                  |               .
+       |             command              |               .
+       | -------------------------------> |               .   serialPort.write(command)
+       |               ACK                |               .
+       | < - - - - - - - - - - - - - - -  |               .   serialPort.read(response)
+       |                                  |               .
+       |                         +-----------------+      .
+       |                         | process command |      .
+       |                         +-----------------+      .
+       |                                  |               .
+       |         initial response         |               .
+       | <------------------------------- |               .
+       |               ACK                |               .
+       | - - - - - - - - - - - - - - - >  |               .   serialPort.write(command)
+       |           data packet            |               .
+       | <------------------------------- |               .   serialPort.read(response)
+       |                                  |               .
++--------------+                          |               .
+| process data |                          |               .
++--------------+                          |               .
+       |                                  |               .
+      ~~~                                ~~~              .
+       |                                  |               .
+       |               ACK                |               .
+       | - - - - - - - - - - - - - - - >  |               .   serialPort.write(command)
+       |         final data packet        |               .
+       | <------------------------------- |               .   serialPort.read(response)
+       |                                  |               .
+       |                                  |               .
++--------------+                          |               .
+| process data |                          |               .
++--------------+                          |               .
+       |                                  |               .
+       |               ACK                |               .
+       | - - - - - - - - - - - - - - - >  |               .   serialPort.write(command)
+       |                                  |               .
+
+
+
+
+And finally a command with an in-going data phase, as seen by bootloader.  An example of this command type is 'write flash' command:
+
+
+   Host / client                       mcuboot
+       |                                  |               .
+       |             command              |               .
+       | -------------------------------> |               .   serialPort.write(command)
+       |               ACK                |               .
+       | < - - - - - - - - - - - - - - -  |               .   serialPort.read(response)
+       |                                  |               .
+       |                         +-----------------+      .
+       |                         | process command |      .
+       |                         +-----------------+      .
+       |                                  |               .
+       |         initial response         |               .
+       | <------------------------------- |               .
+       |                                  |               .
+       |               ACK                |               .
+       | - - - - - - - - - - - - - - - >  |               .   serialPort.write(command)
+       |           data packet            |               .
+       | -------------------------------> |               .
+       |                                  |               .
+       |                           +--------------+       .
+       |                           | process data |       .
+       |                           +--------------+       .
+       |               ACK                |               .
+       | < - - - - - - - - - - - - - - -  |               .   serialPort.read(command)
+       |                                  |               .
+      ~~~                                ~~~              .
+       |                                  |               .
+       |        final data packet         |               .
+       | -------------------------------> |               .   serialPort.write(command)
+       |                                  |               .
+       |                           +--------------+       .
+       |                           | process data |       .
+       |                           +--------------+       .
+       |               ACK                |               .
+       | < - - - - - - - - - - - - - - -  |               .   serialPort.read(command)
+       |          final response          |               .
+       | <------------------------------- |               .
+       |               ACK                |               .
+       | - - - - - - - - - - - - - - - >  |               .   serialPort.write(command)
+       |                                  |               .
+
+
