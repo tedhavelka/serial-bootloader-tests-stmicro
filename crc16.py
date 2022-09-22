@@ -126,8 +126,8 @@ def calc_len_and_crc_of(framing_pkt, command_hdr, command_pkt):
     else:
         command_length = COMMAND_HEADER_BYTE_COUNT
 
-    framing_pkt.length_low = command_length & 0x00FF
-    framing_pkt.length_high = command_length & 0xFF00
+    framing_pkt.length_low  =  command_length & 0x00FF
+    framing_pkt.length_high = (command_length & 0xFF00) >> 8
 
     framing_bytes = bytes_of_framing_packet(framing_pkt, OPTION_OMIT_FRAMING_PACKET_CRC_BYTES)
     command_bytes = bytes_of_command_packet(command_hdr, command_pkt)
@@ -155,6 +155,15 @@ def calc_len_and_crc_of(framing_pkt, command_hdr, command_pkt):
 
 
 def calc_len_and_crc_of_data_pkt(framing_pkt, payload):
+
+    payload_size = len(payload)
+
+    if (payload_size > 65535):
+        print("WARNING - data payload exceed mcuboot max supported size!")
+        return
+
+    framing_pkt.length_low  =  payload_size & 0x00FF
+    framing_pkt.length_high = (payload_size & 0xFF00) >> 8
 
     framing_bytes = bytes_of_framing_packet(framing_pkt, OPTION_OMIT_FRAMING_PACKET_CRC_BYTES)
 

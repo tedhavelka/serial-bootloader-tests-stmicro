@@ -183,6 +183,30 @@ def show_memory_values_in(mcuboot_response):
 
 
 # ----------------------------------------------------------------------
+#  @brief  This routine displays data of python3 type <class 'bytes'>
+#          in hex format, sixteen values per line.
+# ----------------------------------------------------------------------
+
+def show_values_in(data):
+
+    if (type(data) is bytes):
+        print("INFO 0922 - local test show we received data of type 'class bytes'")
+
+    if (1):  # stub conditional for future formatting options logic
+        i = 0
+        for i in range(len(data)):
+            print("%02X" % data[i], end=" ")
+            if(i > 0):
+                if(((i + 1) % 8) == 0):
+                    print(" ", end=" ")
+                if(((i + 1) % 16) == 0):
+                    print(" ")
+
+    print("")
+
+
+
+# ----------------------------------------------------------------------
 #
 #  @brief  This routine to support NXP mcuboot in-coming data phase
 #          commands.  See MCUBOOTRM.pdf page 27 of 169.
@@ -278,7 +302,7 @@ def send_command_with_in_coming_data_phase(cmd, file_holding_data):
 
 
 # ----------------------------------------------------------------------
-# - mcuboot response reading section
+# - mcuboot response reading section               . . . in-coming data
 # ----------------------------------------------------------------------
 
 # (2) listen for ACK and initial response:
@@ -295,7 +319,7 @@ def send_command_with_in_coming_data_phase(cmd, file_holding_data):
 
 
 ## ----------------------------------------------------------------------
-##  STEP - detect packet types . . .
+##  STEP - detect packet types . . .                . . . in-coming data
 ## ----------------------------------------------------------------------
 
             if(len(mcuboot_response) == 2):
@@ -320,7 +344,7 @@ def send_command_with_in_coming_data_phase(cmd, file_holding_data):
 
 
 ## ----------------------------------------------------------------------
-##  STEP - respond to packet types . . .
+##  STEP - respond to packet types . . .            . . . in-coming data
 ## ----------------------------------------------------------------------
 
             if(ack_found):
@@ -336,10 +360,7 @@ def send_command_with_in_coming_data_phase(cmd, file_holding_data):
                 mcuboot_response = []
                 response_found = 0
 
-#       } // end WHILE construct to build responses byte by byte
-
-
-
+#       } // end WHILE construct to store bootloader responses
 
 
 ## ----------------------------------------------------------------------
@@ -370,7 +391,7 @@ def send_command_with_in_coming_data_phase(cmd, file_holding_data):
                 print("expected 0x%02x" % MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
 
 
-#   } // end WHILE construct 
+#   } // end WHILE construct to receive ACK and first bootloader response
 
     print("- DEV 0921 - out of loop for steps 1 and 2, command_status = %u" % command_status)
     print("( COMMAND_PROCESSING_OK = %u )" % COMMAND_PROCESSING_OK)
@@ -384,6 +405,10 @@ def send_command_with_in_coming_data_phase(cmd, file_holding_data):
 #   {
     if (command_status == COMMAND_PROCESSING_OK):
 
+        data_remains_to_send = 1
+        byte_count_to_send = (cmd[14] + (cmd[15]<<8) + (cmd[16]<<16) + (cmd[17]<<24))
+        print("command indicates %u bytes to send," % byte_count_to_send)
+
 # (3) send ACK and first data packet
 
         bytes_sent = serialPort.write(ACK)
@@ -395,11 +420,12 @@ def send_command_with_in_coming_data_phase(cmd, file_holding_data):
         data_pkt = build_mcuboot_data_packet(data)
 
         print("DEV 0921 - first data packet contains:")
-        display_byte_array(data_pkt)
+#        display_byte_array(data_pkt)
+        show_values_in(bytes(data_pkt))
 #        bytes_sent = serialPort.write(data_pkt)
 
 #       {
-        while ((initial_response_received == 0) and (yet_looking == 1)):
+        while ((data_remains_to_send) and (command_status == COMMAND_PROCESSING_OK)):
 
             while ( serialPort.in_waiting == 0 ):
                 time.sleep(CHOSEN_DELAY)
@@ -409,11 +435,11 @@ def send_command_with_in_coming_data_phase(cmd, file_holding_data):
                 mcuboot_response.append(val)
 
 
-#           } //
+#           } // end WHILE loop to store bootloader responses
 
-#       } //
+#       } // end WHILE loop to support repeated data send, ACK return events
 
-#   } // end IF construct around potential repeat data packets transfers
+#   } // end IF construct to check transaction good so far
 
 
 
