@@ -1,9 +1,22 @@
+# ======================================================================
+#  @project   Python3 based bootloader host work
+#
+#  @file mcuboot_command_handling.py
+# ======================================================================
+
+
+
+# ----------------------------------------------------------------------
+# - SECTION - includes
+# ----------------------------------------------------------------------
 
 import time
 
 from mcuboot_packets import *
 
 from nxpbl_common import *         # to provide CHOSEN_DELAY and others
+
+from build_command import *
 
 
 
@@ -30,8 +43,8 @@ def read_file_for_firmware(filename):
 
     while (i < 5):
         i += 1
-        line = file_handle.read()
-        print(line)
+        line = file_handle.readline()
+        print(line, end="")
 
     file_handle.close()
 
@@ -42,11 +55,12 @@ def test_data_payload():
     line_of_data = [0xff,0xff,0xff,0xff, 0xff,0xff,0xff,0xff, 0xff,0xff,0xff,0xff, 0xff,0xff,0xff,0xff]
     test_data = []
     i = 0
-    while ( i < 15 ):
-        test_data.append(line_of_data)
+    while ( i < 16 ):
+        i += 1
+        test_data.extend(line_of_data)
 
     if (1):
-        print("0921 - routine test_data_payload constructed payload of %u bytes" % len(test_data_payload))
+        print("0921 - routine test_data_payload constructed payload of %u bytes" % len(test_data))
 
     return test_data
 
@@ -125,8 +139,7 @@ def parse_for_length_in(mcuboot_response):
         print("WARNING - packet fragment too small to parse for packet length!")
         return 0
     else:
-        print("DEV - parsing length from:", mcuboot_response[3], mcuboot_response[2])
-#        arriving_packet_length = ( (int(bytes(mcuboot_response[3])) << 8) + (int(bytes(mcuboot_response[2]))) )
+#        print("DEV - parsing length from:", mcuboot_response[3], mcuboot_response[2])
         arriving_packet_length = ( (int.from_bytes(mcuboot_response[2], "little"))
                                 + ((int.from_bytes(mcuboot_response[3], "little")) << 8) )
         arriving_packet_length += LENGTH_MCUBOOT_FRAMING_PACKET
@@ -209,7 +222,7 @@ def show_memory_values_in(mcuboot_response):
 #
 # ----------------------------------------------------------------------
 
-def send_command_with_in_coming_data_phase(cmd, file_as_data_source, data_length):
+def send_command_with_in_coming_data_phase(cmd, file_holding_data):
 #{
 
 # --- VAR BEGIN ---
@@ -244,18 +257,22 @@ def send_command_with_in_coming_data_phase(cmd, file_as_data_source, data_length
     yet_looking = 1
     responses_ok = 0
 
+    local_diag_enabled = 1
+
 # --- VAR END ---
 
 
-
-    file_handle = open(file_as_data_source,'r')
+    print("\n- DEV 0921 - in-coming data phase command starting,")
+    print("- DEV 0921 - opening data file . . .")
+    file_handle = open(file_holding_data,'r')
 
 # (1) send command packet:
 
     time.sleep(CHOSEN_DELAY)
+    print("- DEV 0921 - sending command ", cmd, ". . .")
     bytes_sent = serialPort.write(cmd)
-    if (DIAG):
-        print("seeing command through, just sent", bytes_sent, "bytes")
+    if (DIAG_0921):
+        print("- DEV 0921 - in-coming data phase command routine just sent", bytes_sent, "bytes")
         print("    sent:", end=" ")
         display_byte_array(cmd)
 
@@ -278,7 +295,7 @@ def send_command_with_in_coming_data_phase(cmd, file_as_data_source, data_length
 
 
 ## ----------------------------------------------------------------------
-##  STEP - detect ACKs and packets
+##  STEP - detect packet types . . .
 ## ----------------------------------------------------------------------
 
             if(len(mcuboot_response) == 2):
@@ -288,7 +305,7 @@ def send_command_with_in_coming_data_phase(cmd, file_as_data_source, data_length
 
             if(len(mcuboot_response) == 4):
                 response_length = parse_for_length_in(mcuboot_response)
-                print("present response to be", response_length, "bytes long,")
+#                print("present response to be", response_length, "bytes long,")
                 response_length_detected = 1
 
 # Detect packets longer than an ACK, longer than two bytes:
@@ -298,34 +315,65 @@ def send_command_with_in_coming_data_phase(cmd, file_as_data_source, data_length
 # When we find response note that, and note its type . . .
                     response_found = 1
                     response_type = int.from_bytes(mcuboot_response[1], "little")
-                    print("arriving response is of type 0x%02x" % response_type)
+#                    print("arriving response is of type 0x%02x" % response_type)
                     response_length_detected = 0
 
-# ----------------------------------------------------------------------
+
+## ----------------------------------------------------------------------
+##  STEP - respond to packet types . . .
+## ----------------------------------------------------------------------
+
+            if(ack_found):
+                ack_count += 1
+                print("received:", end=" ")
+                display_byte_array(mcuboot_response)
+                mcuboot_response = []
+                ack_found = 0
+
+            if(response_found):
+                print("received:", end=" ")
+                display_byte_array(mcuboot_response)
+                mcuboot_response = []
+                response_found = 0
+
+#       } // end WHILE construct to build responses byte by byte
+
+
+
+
+
+## ----------------------------------------------------------------------
+##  STEP - respond to packet types . . .
+## ----------------------------------------------------------------------
+
 #  Assure bootloader responses valid and in correct order:
-# ----------------------------------------------------------------------
 
 # MCUBOOTRM.pdf says this first response is generic but practice shows it
 # arrives with a packet tag of type 'command' with value 0xA4:
 
-            if(response_type == MCUBOOT_FRAMING_PACKET_TYPE__COMMAND):
-                if ((ack_count == 1) and (generic_response_count == 0)):
-                    generic_response_count += 1
-                    initial_response_received = 1
+        print("ack_count = %u" % ack_count, end=" ")
+        print("generic_response_count = %u" % generic_response_count)
+
+        if(response_type == MCUBOOT_FRAMING_PACKET_TYPE__COMMAND):
+            if ((ack_count == 1) and (generic_response_count == 0)):
+                generic_response_count += 1
+                initial_response_received = 1
 # We should only expect an initial response with command tag as packet type,
 # immediately following an ACK, so other packets types received or
 # different order of packets means we are done looking and have error to
 # report:
-            else:
-                yet_looking = 0
-                command_status = ERROR__COMMAND__UNEXPECTED_PACKET_TYPE
-                if (DIAG_0921):
-                    print("- WARNING - received unexpected packet type for initial bootloader response!")
+        else:
+            yet_looking = 0
+            command_status = ERROR__COMMAND__UNEXPECTED_PACKET_TYPE
+            if (DIAG_0921):
+                print("- WARNING - got response packet type 0x%02x" % response_type, end=" ")
+                print("expected 0x%02x" % MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
 
-#       } // end WHILE construct to read characters from bootloader
 
 #   } // end WHILE construct 
 
+    print("- DEV 0921 - out of loop for steps 1 and 2, command_status = %u" % command_status)
+    print("( COMMAND_PROCESSING_OK = %u )" % COMMAND_PROCESSING_OK)
 
 
 
@@ -339,8 +387,15 @@ def send_command_with_in_coming_data_phase(cmd, file_as_data_source, data_length
 # (3) send ACK and first data packet
 
         bytes_sent = serialPort.write(ACK)
+        if (bytes_sent == len(ACK)):
+            print("    sent:", end=" ")
+            display_byte_array(ACK)
         data = test_data_payload()
-        data_pkt = build_data_packet(data)
+        print("- MARK 1 -")
+        data_pkt = build_mcuboot_data_packet(data)
+
+        print("DEV 0921 - first data packet contains:")
+        display_byte_array(data_pkt)
 #        bytes_sent = serialPort.write(data_pkt)
 
 #       {
@@ -362,6 +417,8 @@ def send_command_with_in_coming_data_phase(cmd, file_as_data_source, data_length
 
 
 
+    if (0):
+#   {
 
 ### logical test for later:
             if(generic_response_count >= 2):
@@ -405,28 +462,12 @@ def send_command_with_in_coming_data_phase(cmd, file_as_data_source, data_length
                 response_found = 0
                 ack_just_sent = 0
 
-#
-##
-## NEED TO ADD bootloader response checks and validation here - TMH
-##
-#
 
 
-# send ACK following response packets:
+#   } // 
 
-        if(not ack_just_sent):
-            ack_just_sent = 1
-            bytes_sent = serialPort.write(ACK)
-            if(bytes_sent == len(ACK)):
-                print("    sent:", end=" ")
-                display_byte_array(ACK)
-            else:
-                print("WARNING - failed to send normal two bytes of ACK packet!")
+    print("command of type in-coming data phase handling done.")
 
-#   } // end python WHILE loop to process bootloader response packets
-
-
-# NEED to capture mcuboot command status value from final generic response packet - TMH
     return command_status
 
 #}

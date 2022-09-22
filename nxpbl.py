@@ -1,10 +1,14 @@
-# ----------------------------------------------------------------------
+# ======================================================================
 #  @project   Python3 based bootloader host work
 #
 #  @file nxpbl.py   NXP mcuboot bootloader host program
+# ======================================================================
+
+
+
 # ----------------------------------------------------------------------
-
-
+# - SECTION - includes
+# ----------------------------------------------------------------------
 
 # python3 includes . . .
 import serial
@@ -85,37 +89,26 @@ from build_command import *
 # - SECTION - effective constants
 # ----------------------------------------------------------------------
 
-# Note following now included, imported from file mcuboot_common.py . . .
 
-#ONE_NANOSECOND           = 0.000000001
-#ONE_MICROSECOND          = 0.000001
-#TEN_MICROSECONDS         = 0.00001
-#ONE_HUNDRED_MICROSECONDS = 0.0001
 
-##CHOSEN_DELAY = ONE_HUNDRED_MICROSECONDS
-##CHOSEN_DELAY = TEN_MICROSECONDS
-#CHOSEN_DELAY = ONE_NANOSECOND
+# ----------------------------------------------------------------------
+# - SECTION - development defines
+# ----------------------------------------------------------------------
 
-#SERIAL_PORT_READ_TIMEOUT = 0.00004340 # in seconds . . . was 1.0 seconds
-
-#DISPLAY_BYTE_PER_LINE = 1
-#DISPLAY_PACKET_PER_LINE = 2
+DEV_TEST_1__ = 0
+DEV_TEST_2__ = 0
+DEV_TEST_5__READ_MEMORY   = 1
+DEV_TEST_6__ERASE_REGION  = 0
+DEV_TEST_7__READ_FILE     = 0
+DEV_TEST_8__WRITE_MEMORY  = 1
+DEV_TEST__CLOSING_MESSAGE = 1
 
 
 
 # ----------------------------------------------------------------------
-# - SECTION - primary script scoped variables
+# - SECTION - globals
 # ----------------------------------------------------------------------
 
-#serialPort = serial.Serial(port = "/dev/ttyUSB0",
-#                           baudrate=115200,
-#                           bytesize=serial.EIGHTBITS,
-#                           parity=serial.PARITY_NONE,   # PARITY_EVEN,
-#                           stopbits=serial.STOPBITS_ONE,
-#                           timeout=SERIAL_PORT_READ_TIMEOUT,
-#                           write_timeout=2.0)
-
-        
 serialString = ""                  # Used to hold data coming over UART
 
 latest_byte = 'a'
@@ -394,7 +387,7 @@ if (1):
 # DEV TEST 5:
 # ----------------------------------------------------------------------
 
-if (1):
+if (DEV_TEST_5__READ_MEMORY):
 # STEP 1 - create mcuboot framing packet
     first_packet = framing_packet(MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
 
@@ -404,7 +397,10 @@ if (1):
     command_header.parameter_count = 2
 
 # STEP 3 - construct list of command parameters (not all commands have parameters)
-    read_memory_parameters = [0x00000200, 0x00000240]
+#    read_memory_parameters = [0x00000200, 0x00000240]
+#    read_memory_parameters = [0x00000000, 0x00000100]
+#    read_memory_parameters = [0x00000200, 0x00000040]
+    read_memory_parameters = [0x00000000, 0x00000018]
 
 # STEP 4 - construct command packet starting with header then add parameters
     command = command_packet(command_header)
@@ -416,7 +412,7 @@ if (1):
 # Following routine knows how to take mcuboot framing packet, command packet, and build complete crc'd message:
     command_as_bytes = crc16.calc_len_and_crc_of(first_packet, command_header, command)
 
-    print("DEV TEST 4 - read memory command with framing entails %u" % len(command_as_bytes), end=" ")
+    print("\nDEV TEST 4 - read memory command with framing entails %u" % len(command_as_bytes), end=" ")
     print("bytes.")
 
     display_packet_as_bytes(command_as_bytes)
@@ -430,7 +426,7 @@ if (1):
 # DEV TEST 6:
 # ----------------------------------------------------------------------
 
-if (0):
+if (DEV_TEST_6__ERASE_REGION):
     print("DEV 6 - erase region test . . .")
     start_addr = 0x00000000
     byte_count = 0x00000200
@@ -447,16 +443,37 @@ if (0):
 # DEV TEST 7:
 # ----------------------------------------------------------------------
 
-if (1):
-    print("0921 - testing read file routine, will read five lines . . .")
+if (DEV_TEST_7__READ_FILE):
+    print("\nDEV TEST 7 - testing read file routine, will read five lines:")
     read_file_for_firmware('notes/blinky.bin')
-    print("0921 - test done.")
+
+
+
+# ----------------------------------------------------------------------
+# DEV TEST 8:
+# ----------------------------------------------------------------------
+
+if (DEV_TEST_8__WRITE_MEMORY):
+
+    print("\nDEV TEST 8 - testing write memory command:")
+
+# def build_mcuboot_command_packet(command_tag, param_1, param_2, param_3, param_4)
+    present_command = build_mcuboot_command_packet(MCUBOOT_COMMAND_TAG__WRITE_MEMORY, 0x00000000, 0x00000200, None, None)
+
+# Note the 'write memory' command will itself contain the start address
+# and number of bytes of data to write, so no need to parameterize
+# these values:
+
+    send_command_with_in_coming_data_phase(present_command, 'notes/blinky.bin')
+
+
 
 
 # ----------------------------------------------------------------------
 # END OF DEVELOPMENT TESTS:
 # ----------------------------------------------------------------------
 
+if (DEV_TEST__CLOSING_MESSAGE):
     print("INFO: dev tests done.")
 
     print("\n- STEP - reading serial port once more as a timeout test,")
@@ -468,4 +485,4 @@ if (1):
     print("")
 
 
-print("NXP bootloader client script done.")
+print("\nNXP bootloader client script done.")

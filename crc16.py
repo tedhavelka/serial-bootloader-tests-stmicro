@@ -103,6 +103,22 @@ def bytes_of_command_packet(command_hdr, command_pkt):
 
 
 
+def bytes_of_data_payload(data):
+
+    i = 0
+    byte_count = len(data)
+    data_as_byte_array = []
+
+    print("- DEV 0921-z - got data payload of %u bytes" % byte_count)
+
+    while ( i < byte_count ):
+        data_as_byte_array.append(data[i])
+        i += 1
+
+    return data_as_byte_array
+
+
+
 def calc_len_and_crc_of(framing_pkt, command_hdr, command_pkt):
 
     if(command_pkt.parameters != None):

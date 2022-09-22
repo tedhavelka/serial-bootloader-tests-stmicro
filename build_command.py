@@ -43,16 +43,15 @@ def build_mcuboot_command_packet(command_tag, param_1, param_2, param_3, param_4
 # Following routine knows how to take mcuboot framing packet, command packet, and build complete crc'd message:
     command_as_bytes = crc16.calc_len_and_crc_of(framing_pkt, command_header, command)
 
-    print("0919 - read memory command with framing entails %u" % len(command_as_bytes), end=" ")
-    print("bytes.")
-
-    display_packet_as_bytes(command_as_bytes)
+    if (1):
+        print("- DEV - showing constructed command as human readable bytes:")
+        display_packet_as_bytes(command_as_bytes)
 
     return command_as_bytes
 
 
 
-def build_data_packet(data):
+def build_mcuboot_data_packet(data):
 
     framing_pkt = framing_packet(MCUBOOT_FRAMING_PACKET_TYPE__DATA)
 

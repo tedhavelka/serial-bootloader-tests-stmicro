@@ -122,7 +122,7 @@ def display_command_packet(packet):
 
 def display_packet_as_bytes(packet):
     j = 0
-    print("DEV - packet as bytes:")
+    print("- DEV ROUTINE - packet as bytes:")
     for j in range(len(packet)):
         print("0x%02X" % packet[j], end=" ")
     print("")
