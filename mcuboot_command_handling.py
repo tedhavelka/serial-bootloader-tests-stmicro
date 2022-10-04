@@ -28,6 +28,9 @@ DIAG__SHOW_DATA_TYPE_IN_ROUTINE__DISPLAY_BYTE_ARRAY = 0
 
 DIAG_0921 = 1
 
+# 2022-10-04 Tuesday . . .
+COUNT_OF_DATA_BLOCKS_TO_SEND__DEV_1004 = 1
+
 
 
 # ----------------------------------------------------------------------
@@ -50,12 +53,16 @@ def read_file_for_firmware(filename):
 
 
 
-def test_data_payload():
+def test_data_payload(no_16_byte_lines):
+
+    if (no_16_byte_lines > 65536):
+        no_16_byte_lines = 65536
+        print("- WARNING - test_data_payload() capping payload at %u bytes" % (16 * 65536))
 
     line_of_data = [0xff,0xff,0xff,0xff, 0xff,0xff,0xff,0xff, 0xff,0xff,0xff,0xff, 0xff,0xff,0xff,0xff]
     test_data = []
     i = 0
-    while ( i < 16 ):
+    while ( i < no_16_byte_lines ):
         i += 1
         test_data.extend(line_of_data)
 
@@ -234,7 +241,7 @@ def show_values_in(data):
 #            -- while data remains to send repeat steps 4 and 5 --
 #
 #
-#          (6) list for ACK and final response
+#          (6) listen for ACK and final response
 #
 #            (7) send ACK
 #
@@ -415,14 +422,19 @@ def send_command_with_in_coming_data_phase(cmd, file_holding_data):
         if (bytes_sent == len(ACK)):
             print("    sent:", end=" ")
             display_byte_array(ACK)
-        data = test_data_payload()
+        data = test_data_payload(32)
         print("- MARK 1 -")
         data_pkt = build_mcuboot_data_packet(data)
 
         print("DEV 0921 - first data packet contains:")
-#        display_byte_array(data_pkt)
         show_values_in(bytes(data_pkt))
-#        bytes_sent = serialPort.write(data_pkt)
+
+        data_remains_to_send = COUNT_OF_DATA_BLOCKS_TO_SEND__DEV_1004
+        blocks_sent = 0
+
+        bytes_sent = serialPort.write(data_pkt)
+        print("DEV 0921 - 1004 - for data packet sent %u bytes," % bytes_sent)
+        blocks_sent += 1
 
 #       {
         while ((data_remains_to_send) and (command_status == COMMAND_PROCESSING_OK)):
@@ -434,63 +446,47 @@ def send_command_with_in_coming_data_phase(cmd, file_holding_data):
                 val = serialPort.read()
                 mcuboot_response.append(val)
 
+## ----------------------------------------------------------------------
+##  STEP - detect packet types . . .                . . . in-coming data
+## ----------------------------------------------------------------------
 
-#           } // end WHILE loop to store bootloader responses
+            if(len(mcuboot_response) == 2):
+                ack_found = check_for_ack(mcuboot_response)
 
+## ----------------------------------------------------------------------
+##  STEP - respond to packet types . . .            . . . in-coming data
+## ----------------------------------------------------------------------
+
+            if(ack_found):
+                ack_count += 1
+                print("received:", end=" ")
+                display_byte_array(mcuboot_response)
+                mcuboot_response = []
+                ack_found = 0
+
+# Very simplistic catching of unexpectedly long packets:
+
+            if(len(mcuboot_response) == 2):
+                print("- WARNING - received packet longer than expected ACK!")
+                print("- exiting 'command_with_incoming_data_phase' early . . .")
+                command_status = ERROR__COMMAND__UNEXPECTED_PACKET_TYPE
+
+#           } // end WHILE loop to watch for ACK after each data block sent
+
+            data_remains_to_send -= 1   ### NEED to move this up top after logic for interactive steps 6, 7 completed - TMH
 #       } // end WHILE loop to support repeated data send, ACK return events
 
 #   } // end IF construct to check transaction good so far
 
 
 
-    if (0):
-#   {
+### IN-PROGRESS steps 6 and 7 will appear here . . .
 
-### logical test for later:
-            if(generic_response_count >= 2):
-                final_generic_response_received = 1
-# . . .
-
-#    while (final_generic_response_received == 0):
+    if (command_status == COMMAND_PROCESSING_OK):
+        print("- DEV 1004 - made it to steps 6 and 7 stub code,")
+        print("- DEV 1004 - in prior block sent %u blocks of 512 bytes of data" % blocks_sent)
 
 
-
-## ----------------------------------------------------------------------
-##  STEP - in-going data phase, respond to packet types . . .
-## ----------------------------------------------------------------------
-
-            if(ack_found):
-                expected_acks_received += 1
-                if(0):
-                    print("received ACK packet!")
-                else:
-                    print("received:", end=" ")
-                    display_byte_array(mcuboot_response)
-
-# In an in-going data phase type command we as client program send our
-# data packets 
-
-# We just processed an ACK so reset pertinent variables to handle next response:
-                mcuboot_response = []
-                ack_found = 0
-                ack_just_sent = 0
-
-            if(response_found):
-                expected_responses_received += 1
-                print("received:", end=" ")
-                display_byte_array(mcuboot_response)
-
-                if(response_type == 0xa5):
-                    print("memory values in latest response:")
-                    show_memory_values_in(mcuboot_response)
-
-                mcuboot_response = []
-                response_found = 0
-                ack_just_sent = 0
-
-
-
-#   } // 
 
     print("command of type in-coming data phase handling done.")
 
@@ -566,14 +562,29 @@ def send_and_see_command_through(cmd):
 # - mcuboot response reading section
 # ----------------------------------------------------------------------
 
-    final_generic_response_not_received = 1
+    COUNT_GENERIC_RESPONSES_EXPECTED_FOR_OUT_GOING_DATA_PHASE = 2
+    COUNT_GENERIC_RESPONSES_EXPECTED_FOR_NO_DATA_PHASE        = 1
+    COMMAND_TAG_BYTEWISE_POSITIVE_OFFSET = 6
+
+    count_generic_reponses_expected = COUNT_GENERIC_RESPONSES_EXPECTED_FOR_OUT_GOING_DATA_PHASE
+#    final_generic_response_not_received = 1
+    final_generic_response_received = 0
     ack_just_sent = 0
 
-    while (final_generic_response_not_received == 1):
+
+    if (cmd[COMMAND_TAG_BYTEWISE_POSITIVE_OFFSET] == MCUBOOT_COMMAND_TAG__FLASH_ERASE_REGION ):
+        count_generic_reponses_expected = COUNT_GENERIC_RESPONSES_EXPECTED_FOR_NO_DATA_PHASE
+
+    print("'see command through' routine expecting %u generic responses," % count_generic_reponses_expected)
+
+
+#   {
+    while (final_generic_response_received == 0):
 
         while ( serialPort.in_waiting == 0 ):
             time.sleep(CHOSEN_DELAY)
 
+#       {
         while ( serialPort.in_waiting > 0 ):
             val = serialPort.read()
             mcuboot_response.append(val)
@@ -612,8 +623,9 @@ def send_and_see_command_through(cmd):
                 generic_response_count += 1
                 response_type = 0
 
-            if(generic_response_count >= 2):
-                final_generic_response_not_received = 0
+#            if(generic_response_count >= 2):
+            if(generic_response_count >= count_generic_reponses_expected):
+                final_generic_response_received = 1
 
 
 ## ----------------------------------------------------------------------
@@ -644,6 +656,8 @@ def send_and_see_command_through(cmd):
                 response_found = 0
                 ack_just_sent = 0
 
+#       } // end WHILE construct to build mcuboot responses for parsing
+
 
 # send ACK following response packets:
         if(not ack_just_sent):
@@ -656,7 +670,7 @@ def send_and_see_command_through(cmd):
             else:
                 print("WARNING - failed to send normal two bytes of ACK packet!")
 
-#   end python while construct - while(final_generic_response_not_received)
+#   } // end python while construct - while(final_generic_response_not_received)
 
 ###        show_memory_contents(memory_values)
 
@@ -667,3 +681,4 @@ def send_and_see_command_through(cmd):
 
 
 
+## --- EOF ---

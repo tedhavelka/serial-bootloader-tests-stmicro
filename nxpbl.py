@@ -98,7 +98,7 @@ from build_command import *
 DEV_TEST_1__ = 0
 DEV_TEST_2__ = 0
 DEV_TEST_5__READ_MEMORY   = 1
-DEV_TEST_6__ERASE_REGION  = 0
+DEV_TEST_6__ERASE_REGION  = 1
 DEV_TEST_7__READ_FILE     = 0
 DEV_TEST_8__WRITE_MEMORY  = 1
 DEV_TEST__CLOSING_MESSAGE = 1
@@ -388,6 +388,8 @@ if (1):
 # ----------------------------------------------------------------------
 
 if (DEV_TEST_5__READ_MEMORY):
+    print("\n\nDEV 5 - test of 'read memory' command underway:")
+
 # STEP 1 - create mcuboot framing packet
     first_packet = framing_packet(MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
 
@@ -400,7 +402,9 @@ if (DEV_TEST_5__READ_MEMORY):
 #    read_memory_parameters = [0x00000200, 0x00000240]
 #    read_memory_parameters = [0x00000000, 0x00000100]
 #    read_memory_parameters = [0x00000200, 0x00000040]
-    read_memory_parameters = [0x00000000, 0x00000018]
+#    read_memory_parameters = [0x00000000, 0x00000018]
+#    read_memory_parameters = [0x00000000, 0x00000400]
+    read_memory_parameters = [0x00000600, 0x00000400]
 
 # STEP 4 - construct command packet starting with header then add parameters
     command = command_packet(command_header)
@@ -412,7 +416,7 @@ if (DEV_TEST_5__READ_MEMORY):
 # Following routine knows how to take mcuboot framing packet, command packet, and build complete crc'd message:
     command_as_bytes = crc16.calc_len_and_crc_of(first_packet, command_header, command)
 
-    print("\nDEV TEST 4 - read memory command with framing entails %u" % len(command_as_bytes), end=" ")
+    print("\nDEV TEST 5 - read memory command with framing entails %u" % len(command_as_bytes), end=" ")
     print("bytes.")
 
     display_packet_as_bytes(command_as_bytes)
@@ -427,15 +431,17 @@ if (DEV_TEST_5__READ_MEMORY):
 # ----------------------------------------------------------------------
 
 if (DEV_TEST_6__ERASE_REGION):
-    print("DEV 6 - erase region test . . .")
+    print("\n\nDEV 6 - erase region test . . .")
     start_addr = 0x00000000
-    byte_count = 0x00000200
+    byte_count = 0x00000600
     present_command = build_mcuboot_command_packet(MCUBOOT_COMMAND_TAG__FLASH_ERASE_REGION, start_addr, byte_count, None, None)
 
-    print("erase region command packet holds:")
-    display_packet_as_bytes(present_command)
+#    print("erase region command packet holds:")
+#    display_packet_as_bytes(present_command)
 
+    print("\n\nDEV 6 - calling routine to send command . . .")
     send_and_see_command_through(present_command)
+    print("\n\nDEV 6 - back from routine to send erase command,")
 
 
 
