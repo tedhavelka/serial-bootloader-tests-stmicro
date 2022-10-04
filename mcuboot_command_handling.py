@@ -191,15 +191,26 @@ def show_memory_values_in(mcuboot_response):
 
 # ----------------------------------------------------------------------
 #  @brief  This routine displays data of python3 type <class 'bytes'>
-#          in hex format, sixteen values per line.
+#          and type <list> in hex format, sixteen values per line.
+#
+#  @note   Seemingly a lot of syntax hoops to jump through to get
+#          list objects printable in a traditional hex dump format!
 # ----------------------------------------------------------------------
 
 def show_values_in(data):
 
+    passed_data_of_type__class_bytes = 0
+    passed_data_of_type__list        = 0
+
     if (type(data) is bytes):
         print("INFO 0922 - local test show we received data of type 'class bytes'")
+        passed_data_of_type__class_bytes = 1
 
-    if (1):  # stub conditional for future formatting options logic
+    if (type(data) is list):
+        print("INFO 1004 - passed data is of type 'list'")
+        passed_data_of_type__list = 1
+
+    if (passed_data_of_type__class_bytes):
         i = 0
         for i in range(len(data)):
             print("%02X" % data[i], end=" ")
@@ -208,6 +219,17 @@ def show_values_in(data):
                     print(" ", end=" ")
                 if(((i + 1) % 16) == 0):
                     print(" ")
+
+    if (passed_data_of_type__list):
+        print("- INFO 1004 - passed data is of python type 'list',")
+        print("- INFO 1004 - this list has %u elements," % len(data))
+        count_data_elements = len(data)
+#        print("- INFO 1004 - first element:")
+#        print(data[0])
+        i = 0
+        while ( i < count_data_elements ):
+            print("%02X" % int.from_bytes(data[i], "little"), end=" ")
+            i += 1
 
     print("")
 
@@ -294,8 +316,13 @@ def send_command_with_in_coming_data_phase(cmd, file_holding_data):
 
 
     print("\n- DEV 0921 - in-coming data phase command starting,")
-    print("- DEV 0921 - opening data file . . .")
-    file_handle = open(file_holding_data,'r')
+#    print("- DEV 0921 - opening data file . . .")
+#    file_handle = open(file_holding_data,'r')
+
+    if ( cmd[COMMAND_TAG_BYTEWISE_POSITIVE_OFFSET] == MCUBOOT_COMMAND_TAG__WRITE_MEMORY ):
+        count_bytes_to_send = ( cmd[17] << 24 ) + ( cmd[16] << 16 ) + ( cmd[15] <<  8 ) + ( cmd[14] <<  0 )
+        print("- DEV TEST 8 - write memory command has data payload of %u bytes," % count_bytes_to_send)
+
 
 # (1) send command packet:
 
@@ -398,7 +425,12 @@ def send_command_with_in_coming_data_phase(cmd, file_holding_data):
                 print("expected 0x%02x" % MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
 
 
-#   } // end WHILE construct to receive ACK and first bootloader response
+#   } // end WHILE construct to receive first ACK and first generic response
+
+    bytes_sent = serialPort.write(ACK)
+    if (bytes_sent == len(ACK)):
+        print("    sent:", end=" ")
+        display_byte_array(ACK)
 
     print("- DEV 0921 - out of loop for steps 1 and 2, command_status = %u" % command_status)
     print("( COMMAND_PROCESSING_OK = %u )" % COMMAND_PROCESSING_OK)
@@ -412,35 +444,29 @@ def send_command_with_in_coming_data_phase(cmd, file_holding_data):
 #   {
     if (command_status == COMMAND_PROCESSING_OK):
 
-        data_remains_to_send = 1
-        byte_count_to_send = (cmd[14] + (cmd[15]<<8) + (cmd[16]<<16) + (cmd[17]<<24))
-        print("command indicates %u bytes to send," % byte_count_to_send)
+        blocks_sent = 0
+        data_remaining_to_send = count_bytes_to_send
+        print("command indicates %u bytes to send," % count_bytes_to_send)
 
 # (3) send ACK and first data packet
 
-        bytes_sent = serialPort.write(ACK)
-        if (bytes_sent == len(ACK)):
-            print("    sent:", end=" ")
-            display_byte_array(ACK)
-        data = test_data_payload(32)
-        print("- MARK 1 -")
-        data_pkt = build_mcuboot_data_packet(data)
-
-        print("DEV 0921 - first data packet contains:")
-        show_values_in(bytes(data_pkt))
-
-        data_remains_to_send = COUNT_OF_DATA_BLOCKS_TO_SEND__DEV_1004
-        blocks_sent = 0
-
-        bytes_sent = serialPort.write(data_pkt)
-        print("DEV 0921 - 1004 - for data packet sent %u bytes," % bytes_sent)
-        blocks_sent += 1
-
 #       {
-        while ((data_remains_to_send) and (command_status == COMMAND_PROCESSING_OK)):
+        while (data_remaining_to_send):
+
+            data = test_data_payload(32)
+            data_pkt = build_mcuboot_data_packet(data)
+
+            print("- DEV TEST 8 - data packet contains:")
+            show_values_in(bytes(data_pkt))
+
+            bytes_sent = serialPort.write(data_pkt)
+            print("- DEV TEST 8 - sent data packet of %u bytes," % bytes_sent)
+            data_remaining_to_send -= 512
+            blocks_sent += 1
 
             while ( serialPort.in_waiting == 0 ):
                 time.sleep(CHOSEN_DELAY)
+
 #           {
             while ( serialPort.in_waiting > 0 ):
                 val = serialPort.read()
@@ -450,30 +476,29 @@ def send_command_with_in_coming_data_phase(cmd, file_holding_data):
 ##  STEP - detect packet types . . .                . . . in-coming data
 ## ----------------------------------------------------------------------
 
-            if(len(mcuboot_response) == 2):
-                ack_found = check_for_ack(mcuboot_response)
+                if(len(mcuboot_response) == 2):
+                    ack_found = check_for_ack(mcuboot_response)
 
 ## ----------------------------------------------------------------------
 ##  STEP - respond to packet types . . .            . . . in-coming data
 ## ----------------------------------------------------------------------
 
-            if(ack_found):
-                ack_count += 1
-                print("received:", end=" ")
-                display_byte_array(mcuboot_response)
-                mcuboot_response = []
-                ack_found = 0
+                if(ack_found):
+                    ack_count += 1
+                    print("received:", end=" ")
+                    display_byte_array(mcuboot_response)
+                    mcuboot_response = []
+                    ack_found = 0
 
 # Very simplistic catching of unexpectedly long packets:
 
-            if(len(mcuboot_response) == 2):
-                print("- WARNING - received packet longer than expected ACK!")
-                print("- exiting 'command_with_incoming_data_phase' early . . .")
-                command_status = ERROR__COMMAND__UNEXPECTED_PACKET_TYPE
+                if(len(mcuboot_response) == 2):
+                    print("- WARNING - received packet longer than expected ACK!")
+                    print("- exiting 'command_with_incoming_data_phase' early . . .")
+                    command_status = ERROR__COMMAND__UNEXPECTED_PACKET_TYPE
 
 #           } // end WHILE loop to watch for ACK after each data block sent
 
-            data_remains_to_send -= 1   ### NEED to move this up top after logic for interactive steps 6, 7 completed - TMH
 #       } // end WHILE loop to support repeated data send, ACK return events
 
 #   } // end IF construct to check transaction good so far
@@ -481,6 +506,9 @@ def send_command_with_in_coming_data_phase(cmd, file_holding_data):
 
 
 ### IN-PROGRESS steps 6 and 7 will appear here . . .
+
+    print("- DEV TEST 8 - at steps 6 and 7 mcuboot packet holds:")
+    show_values_in(mcuboot_response)
 
     if (command_status == COMMAND_PROCESSING_OK):
         print("- DEV 1004 - made it to steps 6 and 7 stub code,")
@@ -564,7 +592,7 @@ def send_and_see_command_through(cmd):
 
     COUNT_GENERIC_RESPONSES_EXPECTED_FOR_OUT_GOING_DATA_PHASE = 2
     COUNT_GENERIC_RESPONSES_EXPECTED_FOR_NO_DATA_PHASE        = 1
-    COMMAND_TAG_BYTEWISE_POSITIVE_OFFSET = 6
+#    COMMAND_TAG_BYTEWISE_POSITIVE_OFFSET = 6
 
     count_generic_reponses_expected = COUNT_GENERIC_RESPONSES_EXPECTED_FOR_OUT_GOING_DATA_PHASE
 #    final_generic_response_not_received = 1

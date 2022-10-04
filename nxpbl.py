@@ -464,7 +464,7 @@ if (DEV_TEST_8__WRITE_MEMORY):
     print("\nDEV TEST 8 - testing write memory command:")
 
 # def build_mcuboot_command_packet(command_tag, param_1, param_2, param_3, param_4)
-    present_command = build_mcuboot_command_packet(MCUBOOT_COMMAND_TAG__WRITE_MEMORY, 0x00000000, 0x00000200, None, None)
+    present_command = build_mcuboot_command_packet(MCUBOOT_COMMAND_TAG__WRITE_MEMORY, 0x00000000, 0x00000600, None, None)
 
 # Note the 'write memory' command will itself contain the start address
 # and number of bytes of data to write, so no need to parameterize

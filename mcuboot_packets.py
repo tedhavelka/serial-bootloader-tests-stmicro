@@ -40,6 +40,11 @@ LENGTH_MCUBOOT_FRAMING_PACKET = 6
 OFFSET_LAST_FRAMING_HEADER_BYTE_INDICATING_PACKET_LENGTH = 4
 
 
+# 2022-10-04 TUE:
+COMMAND_TAG_BYTEWISE_POSITIVE_OFFSET = 6
+
+
+
 
 ## ---------------------------------------------------------------------
 ## - SECTION - classes (somewhat like C data structure)
