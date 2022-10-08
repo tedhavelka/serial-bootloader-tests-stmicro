@@ -576,6 +576,9 @@ def send_and_see_command_through(cmd):
 # To receive second generic response in memory read command signifies all data sent to host
     generic_response_count = 0
 
+# - DEV 1008 -
+    flash_page_count = 0
+
 # --- VAR END ---
 
 
@@ -677,7 +680,9 @@ def send_and_see_command_through(cmd):
                 display_byte_array(mcuboot_response)
 
                 if(response_type == 0xa5):
-                    print("memory values in latest response:")
+# - DEV 1008 -
+                    flash_page_count += 1
+                    print("memory values in latest response, flash page %u:" % flash_page_count)
                     show_memory_values_in(mcuboot_response)
 
                 mcuboot_response = []

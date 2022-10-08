@@ -98,9 +98,9 @@ from build_command import *
 DEV_TEST_1__ = 0
 DEV_TEST_2__ = 0
 DEV_TEST_5__READ_MEMORY   = 1
-DEV_TEST_6__ERASE_REGION  = 1
+DEV_TEST_6__ERASE_REGION  = 0
 DEV_TEST_7__READ_FILE     = 0
-DEV_TEST_8__WRITE_MEMORY  = 1
+DEV_TEST_8__WRITE_MEMORY  = 0
 DEV_TEST__CLOSING_MESSAGE = 1
 
 
@@ -399,12 +399,15 @@ if (DEV_TEST_5__READ_MEMORY):
     command_header.parameter_count = 2
 
 # STEP 3 - construct list of command parameters (not all commands have parameters)
-#    read_memory_parameters = [0x00000200, 0x00000240]
-#    read_memory_parameters = [0x00000000, 0x00000100]
-#    read_memory_parameters = [0x00000200, 0x00000040]
+##
+## REF https://www.mathsisfun.com/binary-decimal-hexadecimal-converter.html
+##
+## $ grep '   [0-9A-F][0-9A-F] ' 48k-read-001.txt > bytes-to-c000.txt
+##
 #    read_memory_parameters = [0x00000000, 0x00000018]
 #    read_memory_parameters = [0x00000000, 0x00000400]
-    read_memory_parameters = [0x00000600, 0x00000400]
+    read_memory_parameters = [0x00000000, 0x0000c000]
+    read_memory_parameters = [0x00000000, 0x0000a400]
 
 # STEP 4 - construct command packet starting with header then add parameters
     command = command_packet(command_header)
