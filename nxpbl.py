@@ -1,10 +1,14 @@
-# ----------------------------------------------------------------------
+# ======================================================================
 #  @project   Python3 based bootloader host work
 #
 #  @file nxpbl.py   NXP mcuboot bootloader host program
+# ======================================================================
+
+
+
 # ----------------------------------------------------------------------
-
-
+# - SECTION - includes
+# ----------------------------------------------------------------------
 
 # python3 includes . . .
 import serial
@@ -21,6 +25,8 @@ from mcuboot_packets import *
 from mcuboot_command_handling import *
 
 from nxpbl_common import *
+
+from build_command import *
 
 
 
@@ -66,6 +72,11 @@ from nxpbl_common import *
 #  (11)  https://www.alpharithms.com/python-bytearray-built-in-function-123516/
 #
 #
+# 2022-09-20
+#
+#  (12)  https://www.digitalocean.com/community/tutorials/read-stdin-python
+#
+#
 # Tangential topics:
 #
 #  (tan-1)  https://www.techonthenet.com/ascii/chart.php
@@ -78,37 +89,29 @@ from nxpbl_common import *
 # - SECTION - effective constants
 # ----------------------------------------------------------------------
 
-# Note following now included, imported from file mcuboot_common.py . . .
 
-#ONE_NANOSECOND           = 0.000000001
-#ONE_MICROSECOND          = 0.000001
-#TEN_MICROSECONDS         = 0.00001
-#ONE_HUNDRED_MICROSECONDS = 0.0001
 
-##CHOSEN_DELAY = ONE_HUNDRED_MICROSECONDS
-##CHOSEN_DELAY = TEN_MICROSECONDS
-#CHOSEN_DELAY = ONE_NANOSECOND
+# ----------------------------------------------------------------------
+# - SECTION - development defines
+# ----------------------------------------------------------------------
 
-#SERIAL_PORT_READ_TIMEOUT = 0.00004340 # in seconds . . . was 1.0 seconds
+DEV_TEST_1__ = 0
+DEV_TEST_2__ = 0
+DEV_TEST_3__READ_MEMORY     = 1
+DEV_TEST_4__ERASE_REGION    = 0
+DEV_TEST_5__ERASE_ALL       = 0
+DEV_TEST_6__BYTES_FROM_FILE = 1
 
-#DISPLAY_BYTE_PER_LINE = 1
-#DISPLAY_PACKET_PER_LINE = 2
+DEV_TEST_7__READ_FILE       = 1
+DEV_TEST_8__WRITE_MEMORY    = 0
+DEV_TEST__CLOSING_MESSAGE   = 1
 
 
 
 # ----------------------------------------------------------------------
-# - SECTION - primary script scoped variables
+# - SECTION - globals
 # ----------------------------------------------------------------------
 
-#serialPort = serial.Serial(port = "/dev/ttyUSB0",
-#                           baudrate=115200,
-#                           bytesize=serial.EIGHTBITS,
-#                           parity=serial.PARITY_NONE,   # PARITY_EVEN,
-#                           stopbits=serial.STOPBITS_ONE,
-#                           timeout=SERIAL_PORT_READ_TIMEOUT,
-#                           write_timeout=2.0)
-
-        
 serialString = ""                  # Used to hold data coming over UART
 
 latest_byte = 'a'
@@ -117,8 +120,7 @@ bootloader_handshake_attempts = 0  # bound loop iterations to finite value
 
 HANDSHAKE_ATTEMPTS_TO_MAKE = 4     # . . . was 20
 
-#tries = 0
-
+# NEED TO REVIEW following three variables:
 command_to_bootloader = 0
 command_get_attempts = 0
 COMMAND_GET_ATTEMPTS_TO_MAKE = 2
@@ -344,42 +346,10 @@ print("NXP bootloader client script starting,")
 # print(hex(xmodem_crc16))
 
 
+
 # ----------------------------------------------------------------------
-# DEV TEST 4:
+# SEND MCUBOOT PING PACKET 0x5AA6 . . .
 # ----------------------------------------------------------------------
-
-# STEP 2 - create mcuboot framing packet
-first_packet = framing_packet(MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
-print("instantiated a first framinig packet, showing its content . . .")
-# display_framing_packet(first_packet)
-
-# STEP 2 - create command header
-print("buidling command header and packet . . .")
-command_header = command_packet_header(MCUBOOT_COMMAND_TAG__READ_MEMORY)
-command_header.parameter_count = 2
-
-# STEP 3 - construct list of command parameters (not all commands have parameters)
-#read_memory_parameters = [0x20000400, 0x00000064]
-read_memory_parameters = [0x00000000, 0x00000040]
-
-# STEP 4 - construct command packet starting with header then add parameters
-command = command_packet(command_header)
-command.parameters = read_memory_parameters 
-print("showing command packet:")
-display_command_packet(command)
-
-# STEP 5 - construct complete mcuboot command packet, framing piece plus header plus parameters
-# Following routine knows how to take mcuboot framing packet, command packet, and build complete crc'd message:
-command_as_bytes = crc16.calc_len_and_crc_of(first_packet, command_header, command)
-
-print("DEV TEST 4 - read memory command with framing entails %u" % len(command_as_bytes), end=" ")
-print("bytes.")
-
-display_packet_as_bytes(command_as_bytes)
-
-
-
-
 
 if (1):
     cmd = [0x5a, 0xa6]
@@ -408,26 +378,143 @@ if (1):
 
 
 # ----------------------------------------------------------------------
+# DEV TEST 3:
+# ----------------------------------------------------------------------
+
+if (DEV_TEST_3__READ_MEMORY):
+    print("\n\nDEV TEST 3 - test of 'read memory' command underway:")
+
+# STEP 1 - create mcuboot framing packet
+    first_packet = framing_packet(MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
+
+# STEP 2 - create command header
+    print("buidling command header and packet . . .")
+    command_header = command_packet_header(MCUBOOT_COMMAND_TAG__READ_MEMORY)
+    command_header.parameter_count = 2
+
+# STEP 3 - construct list of command parameters (not all commands have parameters)
+##
+## REF https://www.mathsisfun.com/binary-decimal-hexadecimal-converter.html
+##
+## $ grep '   [0-9A-F][0-9A-F] ' 48k-read-001.txt > bytes-to-c000.txt
+##
+#    read_memory_parameters = [0x00000000, 0x00000018]
+#    read_memory_parameters = [0x00000000, 0x00000400]
+    read_memory_parameters = [0x00000000, 0x0000c000]
+    read_memory_parameters = [0x00000000, 0x0000a400]
+
+# STEP 4 - construct command packet starting with header then add parameters
+    command = command_packet(command_header)
+    command.parameters = read_memory_parameters 
+    print("showing command packet:")
+    display_command_packet(command)
+
+# STEP 5 - construct complete mcuboot command packet, framing piece plus header plus parameters
+# Following routine knows how to take mcuboot framing packet, command packet, and build complete crc'd message:
+    command_as_bytes = crc16.calc_len_and_crc_of(first_packet, command_header, command)
+
+    print("\nDEV TEST 3 - read memory command with framing entails %u" % len(command_as_bytes), end=" ")
+    print("bytes.")
+
+    display_packet_as_bytes(command_as_bytes)
+
+    print("DEV TEST 3 - sending 'read memory' command . . .")
+    send_and_see_command_through(command_as_bytes)
+
+
+
+# ----------------------------------------------------------------------
+# DEV TEST 4:
+# ----------------------------------------------------------------------
+
+if (DEV_TEST_4__ERASE_REGION):
+    print("\n\nDEV_TEST_4 - erase region test . . .")
+    start_addr = 0x00000000
+    byte_count = 0x00000600
+    present_command = build_mcuboot_command_packet(MCUBOOT_COMMAND_TAG__FLASH_ERASE_REGION,\
+      start_addr, byte_count, None, None, None, None, None)
+
+#    print("erase region command packet holds:")
+#    display_packet_as_bytes(present_command)
+
+    print("\n\nDEV_TEST_4 - calling routine to send command . . .")
+    send_and_see_command_through(present_command)
+    print("\n\nDEV_TEST_4 - back from routine to send erase command,")
+
+
+
+# ----------------------------------------------------------------------
 # DEV TEST 5:
 # ----------------------------------------------------------------------
 
-    print("DEV 5 - sending 'read memory' command . . .")
-#    send_command_bootloader_nxp(command_as_bytes, 1)
-#    listen_for_mcuboot_response(DISPLAY_PACKET_PER_LINE)
-#    print()
-    send_and_see_command_through(command_as_bytes)
+if (DEV_TEST_5__ERASE_ALL):
+    print("\n\nDEV_TEST_5 - erase all flash test . . .")
+    present_command = build_mcuboot_command_packet(MCUBOOT_COMMAND_TAG__FLASH_ERASE_ALL,\
+      None, None, None, None, None, None, None)
+
+    send_and_see_command_through(present_command)
+    print("\n\nDEV_TEST_5 - back from test of 'erase all flash' command,")
+
 
 
 # ----------------------------------------------------------------------
 # DEV TEST 6:
 # ----------------------------------------------------------------------
 
-#    cmd = build_mcuboot_command__reset()
-#    display_packet_as_bytes(cmd)
-#    send_and_see_command_through(cmd)
+if (DEV_TEST_6__BYTES_FROM_FILE):
+
+    print("\nDEV TEST 6 - reading file and building byte array:")
+    filename = "./notes/41k.bin"
+    file_handle = open(filename, 'r')
+    array_1 = []
+
+    TEST_COUNT = 24
+#    array_1 = append_sixteen_bytes_from_hex_data_file(file_handle)
+    array_1 = append_n_bytes_from_hex_data_file(file_handle, TEST_COUNT)
+
+    file_handle.close()
+    print("array returned by 1014 file dev work holds:")
+#    print(array_1, end="\n")
+    show_values_in(array_1)
+    
+
+
+# ----------------------------------------------------------------------
+# DEV TEST 7:
+# ----------------------------------------------------------------------
+
+if (DEV_TEST_7__READ_FILE):
+    print("\nDEV TEST 7 - testing read file routine, will read five lines:")
+    read_file_for_firmware('notes/41k.bin')
 
 
 
+# ----------------------------------------------------------------------
+# DEV TEST 8:
+# ----------------------------------------------------------------------
+
+if (DEV_TEST_8__WRITE_MEMORY):
+
+    print("\nDEV TEST 8 - testing write memory command:")
+
+# def build_mcuboot_command_packet(command_tag, param_1, param_2, param_3, param_4)
+    present_command = build_mcuboot_command_packet(MCUBOOT_COMMAND_TAG__WRITE_MEMORY,\
+      0x00000000, 0x00000600, None, None, None, None, None)
+
+# Note the 'write memory' command will itself contain the start address
+# and number of bytes of data to write, so no need to parameterize
+# these values:
+
+    send_command_with_in_coming_data_phase(present_command, 'notes/blinky.bin')
+
+
+
+
+# ----------------------------------------------------------------------
+# END OF DEVELOPMENT TESTS:
+# ----------------------------------------------------------------------
+
+if (DEV_TEST__CLOSING_MESSAGE):
     print("INFO: dev tests done.")
 
     print("\n- STEP - reading serial port once more as a timeout test,")
@@ -439,4 +526,4 @@ if (1):
     print("")
 
 
-print("NXP bootloader client script done.")
+print("\nNXP bootloader client script done.")
