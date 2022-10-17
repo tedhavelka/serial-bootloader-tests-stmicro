@@ -72,9 +72,8 @@ def append_n_bytes_from_hex_data_file(file_handle, count_bytes_requested):
             line = file_handle.readline()
 
             x = line.split()
-            print("- DEV 1016 - opened file and split present line to obtain:")
-            print(x)
-#            print("array x has length %u," % len(x))
+#            print("- DEV 1016 - opened file and split present line to obtain:")
+#            print(x)
 
             for i in range(len(x)):
                 if ( count_bytes_appended < count_bytes_requested ): 
@@ -82,9 +81,6 @@ def append_n_bytes_from_hex_data_file(file_handle, count_bytes_requested):
                     count_bytes_appended += 1
                 else:
                     print("- DEV 1016 - appended caller requested byte count of %u," % count_bytes_appended)
-
-#            print("- DEV 1016 - calling general display routine . . .")
-#            show_values_in(array_of_bytes)
 
     else:
         print("got null file handle!");
