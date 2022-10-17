@@ -28,6 +28,8 @@ from nxpbl_common import *
 
 from build_command import *
 
+from mcuboot_write_image import *
+
 
 
 # 2022-09-10 SAT
@@ -100,10 +102,11 @@ DEV_TEST_2__ = 0
 DEV_TEST_3__READ_MEMORY     = 1
 DEV_TEST_4__ERASE_REGION    = 0
 DEV_TEST_5__ERASE_ALL       = 0
-DEV_TEST_6__BYTES_FROM_FILE = 1
-
-DEV_TEST_7__READ_FILE       = 1
+DEV_TEST_6__BYTES_FROM_FILE = 0
+DEV_TEST_7__READ_FILE       = 0
 DEV_TEST_8__WRITE_MEMORY    = 0
+DEV_TEST_9__WRITE_IMAGE     = 1
+
 DEV_TEST__CLOSING_MESSAGE   = 1
 
 
@@ -495,9 +498,9 @@ if (DEV_TEST_7__READ_FILE):
 
 if (DEV_TEST_8__WRITE_MEMORY):
 
-    print("\nDEV TEST 8 - testing write memory command:")
+    print("\nDEV TEST 8 - testing write memory command")
 
-# def build_mcuboot_command_packet(command_tag, param_1, param_2, param_3, param_4)
+# def build_mcuboot_command_packet(command_tag, param_1, param_2, param_3, param_4, param_5, param_6, param_7)
     present_command = build_mcuboot_command_packet(MCUBOOT_COMMAND_TAG__WRITE_MEMORY,\
       0x00000000, 0x00000600, None, None, None, None, None)
 
@@ -507,6 +510,18 @@ if (DEV_TEST_8__WRITE_MEMORY):
 
     send_command_with_in_coming_data_phase(present_command, 'notes/blinky.bin')
 
+
+
+# ----------------------------------------------------------------------
+# DEV TEST 9:  write image
+# ----------------------------------------------------------------------
+
+if (DEV_TEST_9__WRITE_IMAGE):
+    print("\nDEV TEST 9 - test of write image routines")
+    filename = "./notes/41k.bin"
+    file_handle = open(filename, 'r')
+    write_firmware_image(file_handle, 82, 0)
+    file_handle.close()
 
 
 
