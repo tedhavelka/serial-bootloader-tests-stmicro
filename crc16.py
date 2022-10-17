@@ -109,7 +109,7 @@ def bytes_of_data_payload(data):
     byte_count = len(data)
     data_as_byte_array = []
 
-    print("- DEV 0921-z - got data payload of %u bytes" % byte_count)
+#    print("- DEV 0921-z - got data payload of %u bytes" % byte_count)
 
     while ( i < byte_count ):
         data_as_byte_array.append(data[i])

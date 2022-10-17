@@ -248,8 +248,9 @@ def write_firmware_image(file_handle, count_pages_to_flash_requested, options):
             present_data_packet = build_mcuboot_data_packet(array_1)
             bytes_sent = serialPort.write(present_data_packet)
             if 1:
-                print("just sent %u bytes in data packet," % len(present_data_packet))
-                display_byte_array(present_data_packet)
+                print("just sent %u bytes in data packet " % len(present_data_packet), end=" ")
+                print(count_pages_flashed)
+#                display_byte_array(present_data_packet)
 
 # NEED TO IMPROVE error checking logic in following IF construct:
             if (bytes_sent > 0):
@@ -263,11 +264,15 @@ def write_firmware_image(file_handle, count_pages_to_flash_requested, options):
 #            count_pages_flashed = count_pages_to_flash_requested
 
 
-# (n) listen for ACK
+# (n) listen for ACK after each data packet:
+
+            post_data_send_ack_received = 0
+            yet_looking = 1
 
             if ( command_status == COMMAND_PROCESSING_OK ):
 #           {
-                while ((initial_response_received == 0) and (yet_looking == 1)):
+#                while ((post_data_send_ack_received == 0) and (yet_looking == 1)):
+                while (post_data_send_ack_received == 0):
 #               {
                     while ( serialPort.in_waiting == 0 ):
                         time.sleep(CHOSEN_DELAY)
@@ -281,7 +286,9 @@ def write_firmware_image(file_handle, count_pages_to_flash_requested, options):
 
                     if( ack_found ):
                         count_pages_flashed += 1
+                        post_data_send_ack_received = 1
                     else:
+                        print("- DEV 1017 - got packet other than ACK after data sent!")
                         command_status = ERROR__COMMAND__UNEXPECTED_PACKET_TYPE
 
 #               } end construct to look for ACK after each data packet sent to bootloader
