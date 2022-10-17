@@ -18,7 +18,7 @@ from mcuboot_packets import *
 #
 #-----------------------------------------------------------------------
 
-def build_mcuboot_command_packet(command_tag, param_1, param_2, param_3, param_4):
+def build_mcuboot_command_packet(command_tag, param_1, param_2, param_3, param_4, param_5, param_6, param_7):
 
 # STEP 1 - create mcuboot framing packet
     framing_pkt = framing_packet(MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
@@ -31,13 +31,23 @@ def build_mcuboot_command_packet(command_tag, param_1, param_2, param_3, param_4
     command_header.parameter_count = 2
 
 # STEP 3 - construct list of command parameters (not all commands have parameters)
-    command_params = [param_1, param_2]
+    if (param_1 == None):
+        if ():
+            print("NOTE - mcuboot command 'erase all flash' has no parameters.")
+        else:
+            print("NOTE - command given by command tag %u has no parameters." % command_tag)
+    elif ((param_2 != None) and (param_3 == None)):
+        command_params = [param_1, param_2]
+        command.parameters = command_params
+    elif (param_7 != None):
+            print("DEV NOTE - got a parameter number 7 from caller!")
+
 
 # STEP 4 - construct command packet starting with header then add parameters
     command = command_packet(command_header)
-    command.parameters = command_params
-    print("showing command packet:")
-    display_command_packet(command)
+##    command.parameters = command_params
+#    print("showing command packet:")
+#    display_command_packet(command)
 
 # STEP 5 - construct complete mcuboot command packet, framing piece plus header plus parameters
 # Following routine knows how to take mcuboot framing packet, command packet, and build complete crc'd message:

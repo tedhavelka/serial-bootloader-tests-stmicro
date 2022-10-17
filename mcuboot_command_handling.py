@@ -53,6 +53,46 @@ def read_file_for_firmware(filename):
 
 
 
+# 2022-10-16 SUN
+# Following routine expects a valid file handle, from which it reads
+# sixteen tokens which it expects to be each a hexadecimal formatted
+# value, representable in a uint8_t datum.
+
+def append_n_bytes_from_hex_data_file(file_handle, count_bytes_requested):
+
+    line = ""
+    x = []
+    array_of_bytes = []
+    count_bytes_appended = 0
+
+    print("- DEV 1016 -")
+
+    if ( file_handle != None ):
+        while ( count_bytes_appended < count_bytes_requested ):
+            line = file_handle.readline()
+
+            x = line.split()
+            print("- DEV 1016 - opened file and split present line to obtain:")
+            print(x)
+#            print("array x has length %u," % len(x))
+
+            for i in range(len(x)):
+                if ( count_bytes_appended < count_bytes_requested ): 
+                    array_of_bytes.append(int(x[i], 16))
+                    count_bytes_appended += 1
+                else:
+                    print("- DEV 1016 - appended caller requested byte count of %u," % count_bytes_appended)
+
+#            print("- DEV 1016 - calling general display routine . . .")
+#            show_values_in(array_of_bytes)
+
+    else:
+        print("got null file handle!");
+
+    return array_of_bytes
+
+
+
 def test_data_payload(no_16_byte_lines):
 
     if (no_16_byte_lines > 65536):
@@ -197,7 +237,8 @@ def show_memory_values_in(mcuboot_response):
 #          list objects printable in a traditional hex dump format!
 # ----------------------------------------------------------------------
 
-def show_values_in(data):
+if 0:
+##def show_values_in(data):
 
     passed_data_of_type__class_bytes = 0
     passed_data_of_type__list        = 0
@@ -551,6 +592,7 @@ def send_command_with_in_coming_data_phase(cmd, file_holding_data):
 # ----------------------------------------------------------------------
 
 def send_and_see_command_through(cmd):
+#{
 
 # --- VAR BEGIN ---
 
@@ -562,10 +604,6 @@ def send_and_see_command_through(cmd):
     mcuboot_response = []
     ack_found = 0
     response_found = 0
-
-#    ack = []
-#    ack.append(0x5a)
-#    ack.append(0xa1)
 
 # Used to detect various lengths of response packets from mcuboot bootloader
     response_length = 0
@@ -595,15 +633,16 @@ def send_and_see_command_through(cmd):
 
     COUNT_GENERIC_RESPONSES_EXPECTED_FOR_OUT_GOING_DATA_PHASE = 2
     COUNT_GENERIC_RESPONSES_EXPECTED_FOR_NO_DATA_PHASE        = 1
-#    COMMAND_TAG_BYTEWISE_POSITIVE_OFFSET = 6
 
     count_generic_reponses_expected = COUNT_GENERIC_RESPONSES_EXPECTED_FOR_OUT_GOING_DATA_PHASE
-#    final_generic_response_not_received = 1
     final_generic_response_received = 0
     ack_just_sent = 0
 
 
     if (cmd[COMMAND_TAG_BYTEWISE_POSITIVE_OFFSET] == MCUBOOT_COMMAND_TAG__FLASH_ERASE_REGION ):
+        count_generic_reponses_expected = COUNT_GENERIC_RESPONSES_EXPECTED_FOR_NO_DATA_PHASE
+
+    if (cmd[COMMAND_TAG_BYTEWISE_POSITIVE_OFFSET] == MCUBOOT_COMMAND_TAG__FLASH_ERASE_ALL ):
         count_generic_reponses_expected = COUNT_GENERIC_RESPONSES_EXPECTED_FOR_NO_DATA_PHASE
 
     print("'see command through' routine expecting %u generic responses," % count_generic_reponses_expected)
@@ -710,7 +749,7 @@ def send_and_see_command_through(cmd):
 
 # NEED to capture mcuboot command status value from final generic response packet - TMH
     return command_status
-
+#}
 
 
 

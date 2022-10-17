@@ -97,11 +97,14 @@ from build_command import *
 
 DEV_TEST_1__ = 0
 DEV_TEST_2__ = 0
-DEV_TEST_5__READ_MEMORY   = 1
-DEV_TEST_6__ERASE_REGION  = 0
-DEV_TEST_7__READ_FILE     = 0
-DEV_TEST_8__WRITE_MEMORY  = 0
-DEV_TEST__CLOSING_MESSAGE = 1
+DEV_TEST_3__READ_MEMORY     = 1
+DEV_TEST_4__ERASE_REGION    = 0
+DEV_TEST_5__ERASE_ALL       = 0
+DEV_TEST_6__BYTES_FROM_FILE = 1
+
+DEV_TEST_7__READ_FILE       = 1
+DEV_TEST_8__WRITE_MEMORY    = 0
+DEV_TEST__CLOSING_MESSAGE   = 1
 
 
 
@@ -343,15 +346,6 @@ print("NXP bootloader client script starting,")
 # print(hex(xmodem_crc16))
 
 
-# ----------------------------------------------------------------------
-# DEV TEST 3:  removed
-# ----------------------------------------------------------------------
-
-# ----------------------------------------------------------------------
-# DEV TEST 4:  removed
-# ----------------------------------------------------------------------
-
-
 
 # ----------------------------------------------------------------------
 # SEND MCUBOOT PING PACKET 0x5AA6 . . .
@@ -384,11 +378,11 @@ if (1):
 
 
 # ----------------------------------------------------------------------
-# DEV TEST 5:
+# DEV TEST 3:
 # ----------------------------------------------------------------------
 
-if (DEV_TEST_5__READ_MEMORY):
-    print("\n\nDEV 5 - test of 'read memory' command underway:")
+if (DEV_TEST_3__READ_MEMORY):
+    print("\n\nDEV TEST 3 - test of 'read memory' command underway:")
 
 # STEP 1 - create mcuboot framing packet
     first_packet = framing_packet(MCUBOOT_FRAMING_PACKET_TYPE__COMMAND)
@@ -419,13 +413,47 @@ if (DEV_TEST_5__READ_MEMORY):
 # Following routine knows how to take mcuboot framing packet, command packet, and build complete crc'd message:
     command_as_bytes = crc16.calc_len_and_crc_of(first_packet, command_header, command)
 
-    print("\nDEV TEST 5 - read memory command with framing entails %u" % len(command_as_bytes), end=" ")
+    print("\nDEV TEST 3 - read memory command with framing entails %u" % len(command_as_bytes), end=" ")
     print("bytes.")
 
     display_packet_as_bytes(command_as_bytes)
 
-    print("DEV 5 - sending 'read memory' command . . .")
+    print("DEV TEST 3 - sending 'read memory' command . . .")
     send_and_see_command_through(command_as_bytes)
+
+
+
+# ----------------------------------------------------------------------
+# DEV TEST 4:
+# ----------------------------------------------------------------------
+
+if (DEV_TEST_4__ERASE_REGION):
+    print("\n\nDEV_TEST_4 - erase region test . . .")
+    start_addr = 0x00000000
+    byte_count = 0x00000600
+    present_command = build_mcuboot_command_packet(MCUBOOT_COMMAND_TAG__FLASH_ERASE_REGION,\
+      start_addr, byte_count, None, None, None, None, None)
+
+#    print("erase region command packet holds:")
+#    display_packet_as_bytes(present_command)
+
+    print("\n\nDEV_TEST_4 - calling routine to send command . . .")
+    send_and_see_command_through(present_command)
+    print("\n\nDEV_TEST_4 - back from routine to send erase command,")
+
+
+
+# ----------------------------------------------------------------------
+# DEV TEST 5:
+# ----------------------------------------------------------------------
+
+if (DEV_TEST_5__ERASE_ALL):
+    print("\n\nDEV_TEST_5 - erase all flash test . . .")
+    present_command = build_mcuboot_command_packet(MCUBOOT_COMMAND_TAG__FLASH_ERASE_ALL,\
+      None, None, None, None, None, None, None)
+
+    send_and_see_command_through(present_command)
+    print("\n\nDEV_TEST_5 - back from test of 'erase all flash' command,")
 
 
 
@@ -433,19 +461,22 @@ if (DEV_TEST_5__READ_MEMORY):
 # DEV TEST 6:
 # ----------------------------------------------------------------------
 
-if (DEV_TEST_6__ERASE_REGION):
-    print("\n\nDEV 6 - erase region test . . .")
-    start_addr = 0x00000000
-    byte_count = 0x00000600
-    present_command = build_mcuboot_command_packet(MCUBOOT_COMMAND_TAG__FLASH_ERASE_REGION, start_addr, byte_count, None, None)
+if (DEV_TEST_6__BYTES_FROM_FILE):
 
-#    print("erase region command packet holds:")
-#    display_packet_as_bytes(present_command)
+    print("\nDEV TEST 6 - reading file and building byte array:")
+    filename = "./notes/41k.bin"
+    file_handle = open(filename, 'r')
+    array_1 = []
 
-    print("\n\nDEV 6 - calling routine to send command . . .")
-    send_and_see_command_through(present_command)
-    print("\n\nDEV 6 - back from routine to send erase command,")
+    TEST_COUNT = 24
+#    array_1 = append_sixteen_bytes_from_hex_data_file(file_handle)
+    array_1 = append_n_bytes_from_hex_data_file(file_handle, TEST_COUNT)
 
+    file_handle.close()
+    print("array returned by 1014 file dev work holds:")
+#    print(array_1, end="\n")
+    show_values_in(array_1)
+    
 
 
 # ----------------------------------------------------------------------
@@ -454,7 +485,7 @@ if (DEV_TEST_6__ERASE_REGION):
 
 if (DEV_TEST_7__READ_FILE):
     print("\nDEV TEST 7 - testing read file routine, will read five lines:")
-    read_file_for_firmware('notes/blinky.bin')
+    read_file_for_firmware('notes/41k.bin')
 
 
 
@@ -467,7 +498,8 @@ if (DEV_TEST_8__WRITE_MEMORY):
     print("\nDEV TEST 8 - testing write memory command:")
 
 # def build_mcuboot_command_packet(command_tag, param_1, param_2, param_3, param_4)
-    present_command = build_mcuboot_command_packet(MCUBOOT_COMMAND_TAG__WRITE_MEMORY, 0x00000000, 0x00000600, None, None)
+    present_command = build_mcuboot_command_packet(MCUBOOT_COMMAND_TAG__WRITE_MEMORY,\
+      0x00000000, 0x00000600, None, None, None, None, None)
 
 # Note the 'write memory' command will itself contain the start address
 # and number of bytes of data to write, so no need to parameterize
